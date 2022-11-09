@@ -29,8 +29,8 @@ def checkForAdjacencies(array, row, col):
     if row < (len(array) - 1):
         if array[row + 1][col] != "":
             adjacentCoordsList.append([row + 1, col])
-    if col < (len(array[0])):
-        if array[row][col + 1] != "":
+    if col < (len(array[0])-1):
+        if array[row][col+1] != "":
             adjacentCoordsList.append([row, col + 1])
     return adjacentCoordsList
 

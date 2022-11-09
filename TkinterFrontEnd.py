@@ -3,12 +3,12 @@ from BackEndCalc import *
 import tkinter as tk
 
 class Window:
-    def __init__(self):
+    def __init__(self,rows,cols):
         # grid variables
         self.gridWidth = 500
         self.gridHight = 500
-        self.gridNumberOfRowCells = 15
-        self.gridNumberOfColumnCells = 15
+        self.gridNumberOfRowCells = rows
+        self.gridNumberOfColumnCells = cols
         self.toolBarWidth = 100
         self.menueHight = 10
 
@@ -75,7 +75,7 @@ class Window:
     # grid button command
     def gridClick(self, i, j):
         self.gridOfButtons[i][j].config(text=self.selcetedTool)
-        CircuitGrid.updateGrid()
+        CircuitGrid.updateGrid(i,j,self.selcetedTool)
 
     def posSelected(self):
         self.selcetedTool = "+"
@@ -90,7 +90,7 @@ class Window:
         self.selcetedTool = ""
 
     # communicating with other files
-    def getGrid(self):
+    def getGrid(self): # useless for now
         return self.gridOfButtons
 
     def run(self):
@@ -98,14 +98,21 @@ class Window:
 
 
 class Grid():
-    def __init__(self):
+    def __init__(self,rows,cols):
         self.grid = []
+        for row in range(rows):
+            self.row = []
+            for col in range(cols):
+                self.row.append("")
+            self.grid.append(self.row)
 
-    def updateGrid(self):
-        self.grid = MainWindow.getGrid()
-        print(self.grid)
 
+    def updateGrid(self,i,j,selectedTool):
+        self.grid[i][j] = selectedTool
+        makeGraphAdjacencyList(self.grid)
 
-CircuitGrid = Grid()
-MainWindow = Window()
+numberOfGridRows = 3
+numberOfGridCols = 3
+CircuitGrid = Grid(numberOfGridRows,numberOfGridCols)
+MainWindow = Window(numberOfGridRows,numberOfGridCols)
 MainWindow.run()

@@ -35,11 +35,11 @@ def checkForAdjacencies(array, row, col):
     return adjacentCoordsList
 
 
-array = [
-    ["", "", "", "q", ""],
-    ["", "", "", "", ""],
-    ["", "", "", "", ""],
-    ["", "", "", "", ""]
-]
-
-makeGraphAdjacencyList(array)
+# array = [
+#     ["", "", "", "q", ""],
+#     ["", "", "", "", ""],
+#     ["", "", "", "", ""],
+#     ["", "", "", "", ""]
+# ]
+#
+# makeGraphAdjacencyList(array)

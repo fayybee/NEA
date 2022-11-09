@@ -1,3 +1,4 @@
+from BackEndCalc import *
 
 import tkinter as tk
 
@@ -103,6 +104,7 @@ class Grid():
     def updateGrid(self):
         self.grid = MainWindow.getGrid()
         print(self.grid)
+
 
 CircuitGrid = Grid()
 MainWindow = Window()

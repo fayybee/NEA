@@ -5,111 +5,111 @@ import tkinter as tk
 class Window:
     def __init__(self,rows,cols):
         # grid variables
-        self.gridWidth = 500
-        self.gridHight = 500
-        self.gridNumberOfRowCells = rows
-        self.gridNumberOfColumnCells = cols
-        self.toolBarWidth = 100
-        self.menueHight = 10
+        self.__gridWidth = 500
+        self.__gridHight = 500
+        self.__gridNumberOfRowCells = rows
+        self.__gridNumberOfColumnCells = cols
+        self.__toolBarWidth = 100
+        self.__menueHight = 10
 
         # window initialising/configuring
-        self.window = tk.Tk()
-        self.window.title = "buttons please"
-        self.window.rowconfigure(0, minsize=self.menueHight)
-        self.window.rowconfigure(1, minsize=self.gridHight)
-        self.window.columnconfigure(0, minsize=self.toolBarWidth)
-        self.window.columnconfigure(1, minsize=self.gridWidth)
+        self.__window = tk.Tk()
+        self.__window.title = "buttons please"
+        self.__window.rowconfigure(0, minsize=self.__menueHight)
+        self.__window.rowconfigure(1, minsize=self.__gridHight)
+        self.__window.columnconfigure(0, minsize=self.__toolBarWidth)
+        self.__window.columnconfigure(1, minsize=self.__gridWidth)
 
         # tool status
-        self.selcetedTool = ""
+        self.__selcetedTool = ""
 
         # frames setup, using hard coded ratios and grid variables to calculate the size of the frames
-        self.menueFrame = tk.Frame(self.window, bg="light grey", relief=tk.GROOVE, borderwidth=5)
-        self.toolBarFrame = tk.Frame(self.window, bg="light slate grey", relief=tk.GROOVE, borderwidth=5)
-        self.gridFrame = tk.Frame(self.window, bg="orange")
+        self.__menueFrame = tk.Frame(self.__window, bg="light grey", relief=tk.GROOVE, borderwidth=5)
+        self.__toolBarFrame = tk.Frame(self.__window, bg="light slate grey", relief=tk.GROOVE, borderwidth=5)
+        self.__gridFrame = tk.Frame(self.__window, bg="orange")
 
         # sizing the grid
-        for i in range(self.gridNumberOfRowCells):
-            self.gridFrame.rowconfigure(i, minsize=int(self.gridHight / self.gridNumberOfColumnCells))
-        for i in range(self.gridNumberOfColumnCells):
-            self.gridFrame.columnconfigure(i, minsize=self.gridWidth / self.gridNumberOfRowCells)
+        for i in range(self.__gridNumberOfRowCells):
+            self.__gridFrame.rowconfigure(i, minsize=int(self.__gridHight / self.__gridNumberOfColumnCells))
+        for i in range(self.__gridNumberOfColumnCells):
+            self.__gridFrame.columnconfigure(i, minsize=self.__gridWidth / self.__gridNumberOfRowCells)
 
         # formating frames
-        self.toolBarFrame.columnconfigure(0, minsize=self.toolBarWidth)
+        self.__toolBarFrame.columnconfigure(0, minsize=self.__toolBarWidth)
         # self.menueFrame.columnconfigure(0,minsize =10)
 
         # labels
-        self.toolbarLabel = tk.Label(self.toolBarFrame, text="TOOL BAR", bg="light slate grey")
-        self.toolbarLabel.grid(row=0)
+        self.__toolbarLabel = tk.Label(self.__toolBarFrame, text="TOOL BAR", bg="light slate grey")
+        self.__toolbarLabel.grid(row=0)
 
         # frame griding
-        self.menueFrame.grid(row=0, column=0, columnspan=2, sticky="NSEW")
-        self.toolBarFrame.grid(row=1, column=0, sticky="NSEW")
-        self.gridFrame.grid(row=1, column=1)
+        self.__menueFrame.grid(row=0, column=0, columnspan=2, sticky="NSEW")
+        self.__toolBarFrame.grid(row=1, column=0, sticky="NSEW")
+        self.__gridFrame.grid(row=1, column=1)
 
         # making the grid buttons
-        self.gridOfButtons = []
-        for row in range(self.gridNumberOfRowCells):
-            self.buttonRow = []
-            for col in range(self.gridNumberOfColumnCells):
-                self.gridButton = tk.Button(self.gridFrame, bg="chocolate1",
-                                            command=lambda i=row, j=col: self.gridClick(i, j))
-                self.gridButton.grid(row=row, column=col, sticky="NSEW")
-                self.buttonRow.append(self.gridButton)
-            self.gridOfButtons.append(self.buttonRow)
+        self.__gridOfButtons = []
+        for row in range(self.__gridNumberOfRowCells):
+            self.__buttonRow = []
+            for col in range(self.__gridNumberOfColumnCells):
+                self.__gridButton = tk.Button(self.__gridFrame, bg="chocolate1",
+                                              command=lambda i=row, j=col: self.gridClick(i, j))
+                self.__gridButton.grid(row=row, column=col, sticky="NSEW")
+                self.__buttonRow.append(self.__gridButton)
+            self.__gridOfButtons.append(self.__buttonRow)
 
         # making toolbar buttons
-        self.buttonPos = tk.Button(self.toolBarFrame, text="+", command=self.posSelected)
-        self.buttonPos.grid(sticky="NESW")
-        self.buttonNeg = tk.Button(self.toolBarFrame, text="-", command=self.negSelected)
-        self.buttonNeg.grid(sticky="NESW")
-        self.buttonWire = tk.Button(self.toolBarFrame, text="wire", command=self.wireSelected)
-        self.buttonWire.grid(sticky="NESW")
-        self.buttonBlank = tk.Button(self.toolBarFrame, text="clear", command=self.blankSelected)
-        self.buttonBlank.grid(sticky="NESW")
+        self.__buttonPos = tk.Button(self.__toolBarFrame, text="+", command=self.posSelected)
+        self.__buttonPos.grid(sticky="NESW")
+        self.__buttonNeg = tk.Button(self.__toolBarFrame, text="-", command=self.negSelected)
+        self.__buttonNeg.grid(sticky="NESW")
+        self.__buttonWire = tk.Button(self.__toolBarFrame, text="wire", command=self.wireSelected)
+        self.__buttonWire.grid(sticky="NESW")
+        self.__buttonBlank = tk.Button(self.__toolBarFrame, text="clear", command=self.blankSelected)
+        self.__buttonBlank.grid(sticky="NESW")
 
         # menue lables and buttons
-        self.SaveButton = tk.Button(self.menueFrame, text="SAVE")
-        self.SaveButton.grid(sticky="NSEW")
+        self.__SaveButton = tk.Button(self.__menueFrame, text="SAVE")
+        self.__SaveButton.grid(sticky="NSEW")
 
     # grid button command
     def gridClick(self, i, j):
-        self.gridOfButtons[i][j].config(text=self.selcetedTool)
-        CircuitGrid.updateGrid(i,j,self.selcetedTool)
+        self.__gridOfButtons[i][j].config(text=self.__selcetedTool)
+        CircuitGrid.updateGrid(i, j, self.__selcetedTool)
 
     def posSelected(self):
-        self.selcetedTool = "+"
+        self.__selcetedTool = "+"
 
     def negSelected(self):
-        self.selcetedTool = "-"
+        self.__selcetedTool = "-"
 
     def wireSelected(self):
-        self.selcetedTool = "wire"
+        self.__selcetedTool = "wire"
 
     def blankSelected(self):
-        self.selcetedTool = ""
+        self.__selcetedTool = ""
 
     # communicating with other files
     def getGrid(self): # useless for now
-        return self.gridOfButtons
+        return self.__gridOfButtons
 
     def run(self):
-        self.window.mainloop()
+        self.__window.mainloop()
 
 
 class Grid():
     def __init__(self,rows,cols):
-        self.grid = []
+        self.__grid = []
         for row in range(rows):
             self.row = []
             for col in range(cols):
                 self.row.append("")
-            self.grid.append(self.row)
+            self.__grid.append(self.row)
 
 
     def updateGrid(self,i,j,selectedTool):
-        self.grid[i][j] = selectedTool
-        makeGraphAdjacencyList(self.grid)
+        self.__grid[i][j] = selectedTool
+        makeGraphAdjacencyList(self.__grid)
 
 numberOfGridRows = 15
 numberOfGridCols =15

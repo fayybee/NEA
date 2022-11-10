@@ -1,4 +1,4 @@
-from BackEndCalc import *
+from AdjacencyList import *
 
 import tkinter as tk
 
@@ -111,8 +111,8 @@ class Grid():
         self.grid[i][j] = selectedTool
         makeGraphAdjacencyList(self.grid)
 
-numberOfGridRows = 3
-numberOfGridCols = 3
+numberOfGridRows = 15
+numberOfGridCols =15
 CircuitGrid = Grid(numberOfGridRows,numberOfGridCols)
 MainWindow = Window(numberOfGridRows,numberOfGridCols)
 MainWindow.run()

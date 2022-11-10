@@ -4,7 +4,7 @@ def makeGraphAdjacencyList(CircuitGrid):
     for i in range(0, len(componantCoords)):
         row = str(componantCoords[i][0])
         col = str(componantCoords[i][1])
-        adjacencyList[row + col] = checkForAdjacencies(CircuitGrid, int(row), int(col))
+        adjacencyList[row + ","+col] = checkForAdjacencies(CircuitGrid, int(row), int(col))
     print(adjacencyList)
 
 
@@ -35,11 +35,3 @@ def checkForAdjacencies(array, row, col):
     return adjacentCoordsList
 
 
-# array = [
-#     ["", "", "", "q", ""],
-#     ["", "", "", "", ""],
-#     ["", "", "", "", ""],
-#     ["", "", "", "", ""]
-# ]
-#
-# makeGraphAdjacencyList(array)

@@ -44,5 +44,3 @@ def checkForAdjacencies(array, row, col):
 #         for neighbour in adjacencyList[node]:
 #             if neighbour != stopNode:
 #                 breakDownAdjacencyList()
-
-

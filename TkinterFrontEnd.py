@@ -52,13 +52,27 @@ class Window:
         for row in range(self.__gridNumberOfRowCells):
             self.__buttonRow = []
             for col in range(self.__gridNumberOfColumnCells):
-                self.__gridButton = tk.Button(self.__gridFrame, bg="chocolate1",
-                                              command=lambda i=row, j=col: self.gridClick(i, j))
-                self.__gridButton.grid(row=row, column=col, sticky="NSEW")
-                self.__buttonRow.append(self.__gridButton)
+                if row % 2 == 1 and col % 2 == 1:
+                    self.__gridButton = tk.Button(self.__gridFrame, bg="tan4",
+                                                  command=lambda i=row, j=col: self.gridClick(i, j))
+                    self.__gridButton.grid(row=row, column=col, sticky="NSEW")
+                    self.__buttonRow.append(self.__gridButton)
+                elif row % 2 == 0 and col % 2 == 0:
+                    self.__gridButton = tk.Button(self.__gridFrame, bg="chocolate1",
+                                                  command=lambda i=row, j=col: self.gridClick(i, j))
+                    self.__gridButton.grid(row=row, column=col, sticky="NSEW")
+                    self.__buttonRow.append(self.__gridButton)
+                else:
+                    self.__gridButton = tk.Button(self.__gridFrame, bg="tan1",
+                                                  command=lambda i=row, j=col: self.gridClick(i, j))
+                    self.__gridButton.grid(row=row, column=col, sticky="NSEW")
+                    self.__buttonRow.append(self.__gridButton)
+
             self.__gridOfButtons.append(self.__buttonRow)
 
         # making toolbar buttons
+        self.__buttonJoin = tk.Button(self.__toolBarFrame, text="join", command=self.joinSelected)
+        self.__buttonJoin.grid(sticky="NEWS")
         self.__buttonPos = tk.Button(self.__toolBarFrame, text="+", command=self.posSelected)
         self.__buttonPos.grid(sticky="NEWS")
         self.__buttonNeg = tk.Button(self.__toolBarFrame, text="-", command=self.negSelected)
@@ -73,9 +87,18 @@ class Window:
         self.__SaveButton.grid(sticky="NSEW")
 
     # grid button command
+    def joinSelected(self):
+        self.__selectedTool = "join"
+
     def gridClick(self, i, j):
-        self.__gridOfButtons[i][j].config(text=self.__selectedTool)
-        CircuitGrid.updateGrid(i, j, self.__selectedTool)
+        # makes it so you can only join corners and add components between join point to reduce connection options
+        if self.__selectedTool == "join":
+            if i % 2 == 0 and j % 2 == 0:
+                self.__gridOfButtons[i][j].config(text=self.__selectedTool)
+                CircuitGrid.updateGrid(i, j, self.__selectedTool)
+        elif (i % 2 == 0 and j % 2 == 1) or (i % 2 == 1 and j % 2 == 0):
+            self.__gridOfButtons[i][j].config(text=self.__selectedTool)
+            CircuitGrid.updateGrid(i, j, self.__selectedTool)
 
     def posSelected(self):
         self.__selectedTool = "+"

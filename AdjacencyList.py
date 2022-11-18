@@ -37,12 +37,12 @@ def checkForAdjacencies(array, row, col):
     return adjacentCoordsList
 
 
-# def breakDownAdjacencyList(adjacencyList,node,stopnode):
+# def breakDownAdjacencyList(adjacencyList,node,stopNode):
 #     visitedNodes = []
 #     if node not in visitedNodes:
 #         visitedNodes.append(node)
 #         for neighbour in adjacencyList[node]:
-#             if neighbour != stopnode:
+#             if neighbour != stopNode:
 #                 breakDownAdjacencyList()
 
 

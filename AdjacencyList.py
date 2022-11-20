@@ -9,6 +9,7 @@ def makeGraphAdjacencyList(CircuitGrid):
 
 
 def findComponentCoords(array):
+    # checks each grid position and adds to list of occupied by components
     coordsList = []
     for row in range(len(array)):
         for column in range(len(array[row])):
@@ -36,11 +37,3 @@ def checkForAdjacencies(array, row, col):
             adjacentCoordsList.append(",".join([str(row), str(col + 1)]))
     return adjacentCoordsList
 
-
-# def breakDownAdjacencyList(adjacencyList,node,stopNode):
-#     visitedNodes = []
-#     if node not in visitedNodes:
-#         visitedNodes.append(node)
-#         for neighbour in adjacencyList[node]:
-#             if neighbour != stopNode:
-#                 breakDownAdjacencyList()

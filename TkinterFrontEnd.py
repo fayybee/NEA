@@ -92,7 +92,7 @@ class Window:
 
     def gridClick(self, i, j):
         # makes it so you can only join corners and add components between join point to reduce connection options
-        if self.__selectedTool == "join":
+        if self.__selectedTool == "join" or self.__selectedTool == "" or self.__selectedTool == "+" or self.__selectedTool == "-":
             if i % 2 == 0 and j % 2 == 0:
                 self.__gridOfButtons[i][j].config(text=self.__selectedTool)
                 CircuitGrid.updateGrid(i, j, self.__selectedTool)
@@ -131,7 +131,7 @@ class Grid:
 
     def updateGrid(self, i, j, selectedTool):
         self.__grid[i][j] = selectedTool
-        makeGraphAdjacencyList(self.__grid)
+ #       makeGraphAdjacencyList(self.__grid)
 
 
 numberOfGridRows = 15

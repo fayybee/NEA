@@ -1,5 +1,5 @@
-from AdjacencyList import *
-
+from ComponentClasses import *
+from CircuitClasses import *
 import tkinter as tk
 
 
@@ -12,6 +12,9 @@ class Window:
         self.__gridNumberOfColumnCells = cols
         self.__toolBarWidth = 100
         self.__menuHeight = 10
+
+        # circuit grid initializing
+        self.__CircuitGrid = Grid(rows, cols)
 
         # window initialising/configuring
         self.__window = tk.Tk()
@@ -79,26 +82,30 @@ class Window:
         self.__buttonNeg.grid(sticky="NEWS")
         self.__buttonWire = tk.Button(self.__toolBarFrame, text="wire", command=self.wireSelected)
         self.__buttonWire.grid(sticky="NEWS")
+        self.__buttonResistor = tk.Button(self.__toolBarFrame, text="resistor", command=self.resistorSelected)
+        self.__buttonResistor.grid(sticky="NEWS")
         self.__buttonBlank = tk.Button(self.__toolBarFrame, text="clear", command=self.blankSelected)
         self.__buttonBlank.grid(sticky="NEWS")
 
         # menu labels and buttons
-        self.__SaveButton = tk.Button(self.__menuFrame, text="SAVE")
-        self.__SaveButton.grid(sticky="NSEW")
+        self.__SolveButton = tk.Button(self.__menuFrame, text="SOLVE", command=self.solveCircuit)
+        self.__SolveButton.grid(sticky="NSEW")
 
     # grid button command
-    def joinSelected(self):
-        self.__selectedTool = "join"
-
     def gridClick(self, i, j):
         # makes it so you can only join corners and add components between join point to reduce connection options
-        if self.__selectedTool == "join" or self.__selectedTool == "" or self.__selectedTool == "+" or self.__selectedTool == "-":
+        if self.__selectedTool == "":
+            self.__gridOfButtons[i][j].config(text=self.__selectedTool)
+        elif self.__selectedTool == "join" or self.__selectedTool == "+" or self.__selectedTool == "-":
             if i % 2 == 0 and j % 2 == 0:
                 self.__gridOfButtons[i][j].config(text=self.__selectedTool)
-                CircuitGrid.updateGrid(i, j, self.__selectedTool)
+                self.__CircuitGrid.updateGrid(i, j, self.__selectedTool)
         elif (i % 2 == 0 and j % 2 == 1) or (i % 2 == 1 and j % 2 == 0):
             self.__gridOfButtons[i][j].config(text=self.__selectedTool)
-            CircuitGrid.updateGrid(i, j, self.__selectedTool)
+            self.__CircuitGrid.updateGrid(i, j, self.__selectedTool)
+
+    def joinSelected(self):
+        self.__selectedTool = "join"
 
     def posSelected(self):
         self.__selectedTool = "+"
@@ -109,13 +116,16 @@ class Window:
     def wireSelected(self):
         self.__selectedTool = "wire"
 
+    def resistorSelected(self):
+        self.__selectedTool = "res"
+
     def blankSelected(self):
         self.__selectedTool = ""
 
-    # communicating with other files
-    def getGrid(self):  # useless for now
-        return self.__gridOfButtons
+    def solveCircuit(self):
+        self.__CircuitGrid.solve()
 
+    # runs window
     def run(self):
         self.__window.mainloop()
 
@@ -126,16 +136,32 @@ class Grid:
         for row in range(rows):
             self.row = []
             for col in range(cols):
-                self.row.append("")
+                self.row.append(None)
             self.__grid.append(self.row)
+        self.__circuitClass = None
 
     def updateGrid(self, i, j, selectedTool):
-        self.__grid[i][j] = selectedTool
- #       makeGraphAdjacencyList(self.__grid)
+        if selectedTool == "+":
+            self.__grid[i][j] = ("+", SourceNode())
+        if selectedTool == "-":
+            self.__grid[i][j] = ("-", GroundNode())
+        if selectedTool == "wire":
+            self.__grid[i][j] = ("wire", Wire())
+        if selectedTool == "res":
+            self.__grid[i][j] = ("resistor", Resistor())
+        if selectedTool == "join":
+            self.__grid[i][j] = ("join", ComponentNode())
+        if selectedTool == "":
+            self.__grid[i][j] = None
+
+    def solve(self):
+        self.__circuitClass = CircuitGraph(self.__grid)
+        self.__circuitClass.solveGraph()
+        self.__circuitClass.listNodes()
+        print(self.__grid)
 
 
 numberOfGridRows = 15
 numberOfGridCols = 15
-CircuitGrid = Grid(numberOfGridRows, numberOfGridCols)
 MainWindow = Window(numberOfGridRows, numberOfGridCols)
 MainWindow.run()

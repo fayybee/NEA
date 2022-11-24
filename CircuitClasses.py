@@ -1,3 +1,5 @@
+from ComponentClasses import objectGetVoltage, objectGetCurrent, objectGetResistance
+
 minimumVoltageChange = 0.001
 
 
@@ -7,28 +9,29 @@ class CircuitGraph:
         self.__listEdges = {}
         for row in range(len(CircuitGrid)):  # FIXME optimising steps
             for column in range(len(CircuitGrid[row])):
-                if CircuitGrid[row][column] != "":
+                if CircuitGrid[row][column] is not None:
                     if row % 2 == 0 and column % 2 == 0:
                         voltage = None
-                        if circuitGrid[row][column] == "+":
-                            voltage = 5.0  # FIXME change to be voltage of + object
-                        elif circuitGrid[row][column] == "-":
-                            voltage = 0.0
+                        if CircuitGrid[row][column][0] == "+" or CircuitGrid[row][column][0] == "-":
+                            voltage = objectGetVoltage(CircuitGrid[row][column][1])
                         self.__listNodes[(row, column)] = Node(voltage)
         for row in range(len(CircuitGrid)):  # FIXME optimising steps
             for column in range(len(CircuitGrid[row])):
-                if CircuitGrid[row][column] != "":
-                    if row % 2 == 0 and column % 2 == 1:
-                        inputNode = self.__listNodes[(row, column - 1)]
-                        outputNode = self.__listNodes[(row, column + 1)]
-                    elif row % 2 == 1 and column % 2 == 0:
-                        inputNode = self.__listNodes[(row - 1, column)]
-                        outputNode = self.__listNodes[(row + 1, column)]
-                    else:
-                        continue
-                    self.__listEdges[(row, column)] = Edge(inputNode, outputNode)
+                if CircuitGrid[row][column] is not None:
+                    try:
+                        if row % 2 == 0 and column % 2 == 1:
+                                inputNode = self.__listNodes[(row, column - 1)]
+                                outputNode = self.__listNodes[(row, column + 1)]
+                        elif row % 2 == 1 and column % 2 == 0:
+                                inputNode = self.__listNodes[(row - 1, column)]
+                                outputNode = self.__listNodes[(row + 1, column)]
+                        else:
+                            continue
+                        self.__listEdges[(row, column)] = Edge(inputNode, outputNode, CircuitGrid[row][column])
+                    except:
+                        print("circuit not complete")
 
-    def solveGraph(self):
+    def solveGraph(self):  # FIXME is calculating incorrect values
         count = 0
         while any((not node.isStable()) for node in
                   self.__listNodes.values()):  # while any of the nodes are not stable do loop
@@ -88,15 +91,18 @@ class Node:
         return self.__stable
 
     def isFixed(self):
-        return self.__fixedVoltage is not None  # returns true is fixed voltage isn't none else return false
+        return self.__fixedVoltage is not None  # returns true if fixed voltage isn't none else return false
 
     def getEdges(self):
         return self.__edges
 
 
 class Edge:
-    def __init__(self, inputNode, outputNode):
-        self.__resistance = 500  # FIXME change to resistance of object
+    def __init__(self, inputNode, outputNode, circuitGridContentse):
+        if circuitGridContentse[0] == "wire":
+            self.__resistance = 0.001
+        else:
+            self.__resistance = objectGetResistance(circuitGridContentse[1])
         self.__inputNode = inputNode
         self.__outputNode = outputNode
         self.__current = 0
@@ -107,20 +113,6 @@ class Edge:
         if askingNode == self.__outputNode:
             return self.__inputNode
         return self.__outputNode
-        # return self.__outputNode if askingNode == self.__inputNode else self.__outputNode
 
     def getResistance(self):
         return self.__resistance
-
-
-circuitGrid = [
-    ["+", "p", "p", "", ""],
-    ["p", "", "p", "", ""],
-    ["p", "p", "p", "", ""],
-    ["", "", "p", "", ""],
-    ["", "", "-", "", ""]
-]
-
-circuit = CircuitGraph(circuitGrid)
-circuit.solveGraph()
-circuit.listNodes()

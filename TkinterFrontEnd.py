@@ -74,6 +74,8 @@ class Window:
             self.__gridOfButtons.append(self.__buttonRow)
 
         # making toolbar buttons
+        self.__buttonSelect = tk.Button(self.__toolBarFrame, text="select", command=self.selectSelected)
+        self.__buttonSelect.grid(sticky="NEWS")
         self.__buttonJoin = tk.Button(self.__toolBarFrame, text="join", command=self.joinSelected)
         self.__buttonJoin.grid(sticky="NEWS")
         self.__buttonPos = tk.Button(self.__toolBarFrame, text="+", command=self.posSelected)
@@ -94,6 +96,15 @@ class Window:
     # grid button command
     def gridClick(self, i, j):
         # makes it so you can only join corners and add components between join point to reduce connection options
+        # if self.__selectedTool == "selected":
+        #     if i % 2 == 0 and j % 2 == 0:
+        #         potential = objectGetVoltage(self.__CircuitGrid.getObject(i, j))
+        #         print("Potential:", potential)
+        #     elif (i % 2 == 0 and j % 2 == 1) or (i % 2 == 1 and j % 2 == 0):
+        #         potentialDifference = objectGetVoltage(self.__CircuitGrid.getObject(i, j))
+        #         current = objectGetCurrent(self.__CircuitGrid.getObject(i, j))
+        #         resistance = objectGetResistance(self.__CircuitGrid.getObject(i, j))
+        #         print("p.d:", potentialDifference, "\n", "current:", current, "\n", "resistance:", resistance)
         if self.__selectedTool == "":
             self.__gridOfButtons[i][j].config(text=self.__selectedTool)
         elif self.__selectedTool == "join" or self.__selectedTool == "+" or self.__selectedTool == "-":
@@ -103,6 +114,10 @@ class Window:
         elif (i % 2 == 0 and j % 2 == 1) or (i % 2 == 1 and j % 2 == 0):
             self.__gridOfButtons[i][j].config(text=self.__selectedTool)
             self.__CircuitGrid.updateGrid(i, j, self.__selectedTool)
+
+    # button commands
+    def selectSelected(self):
+        self.__selectedTool = "selected"
 
     def joinSelected(self):
         self.__selectedTool = "join"
@@ -130,6 +145,7 @@ class Window:
         self.__window.mainloop()
 
 
+# grid class which holds the objects and the symbol connected to it
 class Grid:
     def __init__(self, rows, cols):
         self.__grid = []
@@ -154,11 +170,16 @@ class Grid:
         if selectedTool == "":
             self.__grid[i][j] = None
 
-    def solve(self):
+    def solve(self): # solves for the potential of each "node"
         self.__circuitClass = CircuitGraph(self.__grid)
         self.__circuitClass.solveGraph()
         self.__circuitClass.listNodes()
-        print(self.__grid)
+
+    def getObject(self, i, j):
+        if self.__grid[i][j] is not None:
+            return self.__grid[i][j][1]
+        else:
+            return None
 
 
 numberOfGridRows = 15

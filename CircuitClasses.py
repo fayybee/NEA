@@ -1,4 +1,4 @@
-from ComponentClasses import objectGetVoltage, objectGetResistance, objectSetVoltage
+from ComponentClasses import objectGetVoltage, objectGetResistance, objectSetVoltage, objectSetCurrent
 
 minimumVoltageChange = 0.001
 
@@ -55,17 +55,21 @@ class CircuitGraph:
         # updating the component object in the grid so they can be accessed with the select tool
         for key, node in self.__listNodes.items():
             row, column = key[0], key[1]
-            if self.__circuitGrid[row][column][0] != "+" and self.__circuitGrid[row][column][0] != "-": # just to
+            if self.__circuitGrid[row][column][0] != "+" and self.__circuitGrid[row][column][0] != "-":  # just to
                 # make sure the source and ground cannot be overwritten if they were calculated wrong
-                objectSetVoltage(self.__circuitGrid[row][column][1], node.getVoltage())
+                objectSetVoltage(self.__circuitGrid[row][column][1], round(node.getVoltage(), 2))
         for key, edge in self.__listEdges.items():
             row, column = key[0], key[1]
-            objectSetVoltage(self.__circuitGrid[row][column][1], edge.getPD())
+            objectSetVoltage(self.__circuitGrid[row][column][1], round(edge.getPD(), 2))
+            objectSetCurrent(self.__circuitGrid[row][column][1], round((edge.getPD() / edge.getResistance()), 2))
 
     def listNodes(self):  # for debugging, used in tkinter front end
         for key, node in self.__listNodes.items():
             print("Dict entry:", key, "=", node.getVoltage())
 
+    def cleanUpAll(self):
+        self.__listNodes.clear()
+        self.__listEdges.clear()
 
 class Node:
     def __init__(self, vFixed=None):

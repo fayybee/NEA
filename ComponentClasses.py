@@ -58,10 +58,13 @@ def objectGetResistance(componentObject):
     return componentObject.getResistance()
 
 
+def objectSetCurrent(componentObject, newC):
+    componentObject.updateCurrent(newC)
+
+
 def objectGetCurrent(componentObject):
     return componentObject.getCurrent()
 
+
 def objectSetVoltage(componentObject, newV):
     componentObject.updateVoltage(newV)
-
-

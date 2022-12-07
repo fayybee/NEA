@@ -28,6 +28,7 @@ class Window:
 
         # tool status
         self.__selectedTool = ""
+        self.__selectedObject = None
 
         # frames setup
         self.__menuFrame = tk.Frame(self.__window, bg="light grey", relief=tk.GROOVE, borderwidth=5)
@@ -53,7 +54,17 @@ class Window:
         self.__statsLabel = tk.Label(self.__statsFrame, text="STATS", bg="MistyRose3")
         self.__statsLabel.grid(row=0)
         self.__currentStatisticsLabel = tk.Label(self.__statsFrame, bg="MistyRose3")
-        self.__currentStatisticsLabel.grid()
+        self.__currentStatisticsLabel.grid(row=1)
+        self.__voltageEntryLabel = tk.Label(self.__statsFrame, text="Enter Voltage", bg="MistyRose3")
+        self.__voltageEntryLabel.grid(row=2)
+        self.__resistanceEntryLabel = tk.Label(self.__statsFrame, text="Enter Resistance", bg="MistyRose3")
+        self.__resistanceEntryLabel.grid(row=4)
+
+        # entry widgets
+        self.__voltageEntry = tk.Entry(self.__statsFrame, width=int(self.__toolBarWidth / 6))
+        self.__voltageEntry.grid(row=3, sticky="s")
+        self.__resistanceEntry = tk.Entry(self.__statsFrame, width=int(self.__toolBarWidth / 6))
+        self.__resistanceEntry.grid(row=5, sticky="s")
 
         # frame griding
         self.__menuFrame.grid(row=0, column=0, columnspan=2, sticky="NSEW")
@@ -100,29 +111,39 @@ class Window:
         self.__buttonBlank = tk.Button(self.__toolBarFrame, text="clear", command=self.blankSelected)
         self.__buttonBlank.grid(row=7, sticky="NEWS")
 
+        # stats buttons
+        self.__applyStatsButton = tk.Button(self.__statsFrame, text="apply new stats", command=self.applyNewStats)
+        self.__applyStatsButton.grid()
+
         # menu labels and buttons
         self.__solveButton = tk.Button(self.__menuFrame, text="SOLVE", command=self.solveCircuit)
-        self.__solveButton.grid(row = 0,column=0, sticky="NSEW")
+        self.__solveButton.grid(row=0, column=0, sticky="NSEW")
         self.__clear = tk.Button(self.__menuFrame, text="clear all", command=self.clearCircuit)
         self.__clear.grid(row=0, column=1, sticky="NEWS")
 
     # grid button command
     def gridClick(self, i, j):
-        # makes it so you can only join corners and add components between join point to reduce connection options
         if self.__selectedTool == "selected":
+            self.__selectedObject = self.__CircuitGrid.getObject(i, j)
             try:
                 if i % 2 == 0 and j % 2 == 0:
-                    potential = objectGetVoltage(self.__CircuitGrid.getObject(i, j))
+                    potential = objectGetVoltage(self.__selectedObject)
                     self.__currentStatisticsLabel.config(text="potential: " + str(potential))
                 elif (i % 2 == 0 and j % 2 == 1) or (i % 2 == 1 and j % 2 == 0):
-                    potentialDifference = objectGetVoltage(self.__CircuitGrid.getObject(i, j))
-                    current = objectGetCurrent(self.__CircuitGrid.getObject(i, j))
-                    resistance = objectGetResistance(self.__CircuitGrid.getObject(i, j))
-                    self.__currentStatisticsLabel.config(
-                        text="p.d: " + str(potentialDifference) + "\n" + "current: " + str(
-                            current) + "\n" + "resistance: " + str(resistance))
+                    if isinstance(self.__selectedObject, Resistor):
+                        potentialDifference = objectGetVoltage(self.__selectedObject)
+                        current = objectGetCurrent(self.__selectedObject)
+                        resistance = objectGetResistance(self.__selectedObject)
+                        self.__currentStatisticsLabel.config(
+                            text="p.d: " + str(potentialDifference) + "\n" + "current: " + str(
+                                current) + "\n" + "resistance: " + str(resistance))
+                    elif isinstance(self.__selectedObject, Wire):
+                        current = objectGetCurrent(self.__selectedObject)
+                        self.__currentStatisticsLabel.config(text="p.d: 0.00" + "\n" + "current: " + str(current) + "\n" + "resistance: 0.00")
             except:
-                pass
+                self.__currentStatisticsLabel.config(text="no component selected")
+
+        # makes it so you can only join corners and add components between join point to reduce connection options
         elif self.__selectedTool == "":
             self.__gridOfButtons[i][j].config(text=self.__selectedTool)
         elif self.__selectedTool == "join" or self.__selectedTool == "+" or self.__selectedTool == "-":
@@ -133,10 +154,7 @@ class Window:
             self.__gridOfButtons[i][j].config(text=self.__selectedTool)
             self.__CircuitGrid.updateGrid(i, j, self.__selectedTool)
 
-    def presentData(self):
-        pass
-
-    # button commands
+    # tool bar button commands
     def selectSelected(self):
         self.__selectedTool = "selected"
 
@@ -158,6 +176,7 @@ class Window:
     def blankSelected(self):
         self.__selectedTool = ""
 
+    # menu bar button commands
     def solveCircuit(self):
         self.__CircuitGrid.solve()
 
@@ -165,7 +184,17 @@ class Window:
         self.__CircuitGrid.clear()
         for i in range(len(self.__gridOfButtons)):
             for j in range(len(self.__gridOfButtons[i])):
-                self.__gridOfButtons[i][j].config(text="")  # FIXME not clearing
+                self.__gridOfButtons[i][j].config(text="")
+
+    # stats bar button commands
+    def applyNewStats(self):
+        if isinstance(self.__selectedObject, SourceNode):
+            self.__selectedObject.updateVoltage(float(self.__voltageEntry.get()))  # using the objects getters and setters
+            # not external functions
+        if isinstance(self.__selectedObject, Resistor):
+            self.__selectedObject.setResistance(float(self.__resistanceEntry.get()))
+        self.__voltageEntry.delete(0, tk.END)
+        self.__resistanceEntry.delete(0, tk.END)
 
     # runs window
     def run(self):

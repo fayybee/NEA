@@ -51,17 +51,19 @@ class CircuitGraph:
             for node in self.__listNodes.values():
                 # once all nodes have been estimated it sets the new voltages (repeats until all nodes are stable)
                 node.updateVoltage()
+        self.updateComponentObjects()
 
+    def updateComponentObjects(self):
         # updating the component object in the grid so they can be accessed with the select tool
         for key, node in self.__listNodes.items():
             row, column = key[0], key[1]
             if self.__circuitGrid[row][column][0] != "+" and self.__circuitGrid[row][column][0] != "-":  # just to
                 # make sure the source and ground cannot be overwritten if they were calculated wrong
-                objectSetVoltage(self.__circuitGrid[row][column][1], round(node.getVoltage(), 2))
+                objectSetVoltage(self.__circuitGrid[row][column][1], round(node.getVoltage(), 3))
         for key, edge in self.__listEdges.items():
             row, column = key[0], key[1]
-            objectSetVoltage(self.__circuitGrid[row][column][1], round(edge.getPD(), 2))
-            objectSetCurrent(self.__circuitGrid[row][column][1], round((edge.getPD() / edge.getResistance()), 2))
+            objectSetVoltage(self.__circuitGrid[row][column][1], round(edge.getPD(), 3))
+            objectSetCurrent(self.__circuitGrid[row][column][1], round((float(edge.getPD()) / float(edge.getResistance())), 3))
 
     def listNodes(self):  # for debugging, used in tkinter front end
         for key, node in self.__listNodes.items():
@@ -70,6 +72,7 @@ class CircuitGraph:
     def cleanUpAll(self):
         self.__listNodes.clear()
         self.__listEdges.clear()
+
 
 class Node:
     def __init__(self, vFixed=None):
@@ -113,11 +116,11 @@ class Node:
 
 
 class Edge:
-    def __init__(self, inputNode, outputNode, circuitGridContentse):
-        if circuitGridContentse[0] == "wire":
+    def __init__(self, inputNode, outputNode, circuitGridContents):
+        if circuitGridContents[0] == "wire":
             self.__resistance = 0.000001
         else:
-            self.__resistance = objectGetResistance(circuitGridContentse[1])
+            self.__resistance = objectGetResistance(circuitGridContents[1])
         self.__inputNode = inputNode
         self.__outputNode = outputNode
         inputNode.addEdge(self)

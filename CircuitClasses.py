@@ -65,7 +65,7 @@ class CircuitGraph:
             objectSetVoltage(self.__circuitGrid[row][column][1], round(edge.getPD(), 3))
             objectSetCurrent(self.__circuitGrid[row][column][1], round((float(edge.getPD()) / float(edge.getResistance())), 3))
 
-    def listNodes(self):  # for debugging, used in tkinter front end
+    def printNodes(self):  # for debugging, used in tkinter front end
         for key, node in self.__listNodes.items():
             print("Dict entry:", key, "=", node.getVoltage())
 

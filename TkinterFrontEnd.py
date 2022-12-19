@@ -1,5 +1,6 @@
 from ComponentClasses import *
 from CircuitClasses import *
+# from GraphWindow import *
 import tkinter as tk
 
 
@@ -46,7 +47,7 @@ class Window:
         self.__toolBarFrame.columnconfigure(0, minsize=self.__toolBarWidth)
         self.__statsFrame.columnconfigure(0, minsize=self.__toolBarWidth)
         for i in range(5):
-            self.__menuFrame.columnconfigure(i, minsize=50)
+            self.__menuFrame.columnconfigure(i, minsize=100)
 
         # labels
         self.__toolbarLabel = tk.Label(self.__toolBarFrame, text="TOOL BAR", bg="light slate grey")
@@ -116,10 +117,12 @@ class Window:
         self.__applyStatsButton.grid()
 
         # menu labels and buttons
-        self.__solveButton = tk.Button(self.__menuFrame, text="SOLVE", command=self.solveCircuit)
+        self.__solveButton = tk.Button(self.__menuFrame, text="SOLVE CIRCUIT", command=self.solveCircuit)
         self.__solveButton.grid(row=0, column=0, sticky="NSEW")
-        self.__clear = tk.Button(self.__menuFrame, text="clear all", command=self.clearCircuit)
-        self.__clear.grid(row=0, column=1, sticky="NEWS")
+        self.__plotButton = tk.Button(self.__menuFrame, text="PLOT GRAPH")
+        self.__plotButton.grid(row=0, column=1, sticky="NSEW")
+        self.__clear = tk.Button(self.__menuFrame, text="clear grid", command=self.clearCircuit)
+        self.__clear.grid(row=0, column=2, sticky="NEWS")
 
     # grid button command
     def gridClick(self, i, j):
@@ -129,7 +132,8 @@ class Window:
                 if i % 2 == 0 and j % 2 == 0:
                     potential = objectGetVoltage(self.__selectedObject)
                     self.__currentStatisticsLabel.config(text="potential: " + str(potential))
-                elif (i % 2 == 0 and j % 2 == 1) or (i % 2 == 1 and j % 2 == 0):
+                    return
+                if (i % 2 == 0 and j % 2 == 1) or (i % 2 == 1 and j % 2 == 0):
                     if isinstance(self.__selectedObject, Resistor):
                         potentialDifference = objectGetVoltage(self.__selectedObject)
                         current = objectGetCurrent(self.__selectedObject)
@@ -186,6 +190,14 @@ class Window:
             for j in range(len(self.__gridOfButtons[i])):
                 self.__gridOfButtons[i][j].config(text="")
 
+    def saveCircuit(self):
+        saveWindow = tk.Toplevel(Window)
+        saveWindow.title("Save Circuit")
+        #FIXME finish writing
+
+    def plotGraph(self):
+        pass
+
     # stats bar button commands
     def applyNewStats(self):
         if isinstance(self.__selectedObject, SourceNode):
@@ -229,7 +241,7 @@ class Grid:
     def solve(self):  # solves for the potential of each "node"
         self.__circuitClass = CircuitGraph(self.__grid)
         self.__circuitClass.solveGraph()
-        self.__circuitClass.listNodes()
+        self.__circuitClass.printNodes()  # debugging
 
     def clear(self):
         for row in range(len(self.__grid)):

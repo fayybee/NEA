@@ -1,12 +1,12 @@
 class ComponentNode:
     def __init__(self, voltage=0.0):
-        self.__potential = voltage
+        self._potential = voltage
 
     def updateVoltage(self, newVoltage):
-        self.__potential = newVoltage
+        self._potential = newVoltage
 
     def getVoltage(self):
-        return self.__potential
+        return self._potential
 
 
 class SourceNode(ComponentNode):
@@ -21,32 +21,32 @@ class GroundNode(ComponentNode):
 
 class Wire:
     def __init__(self):
-        self.__current = 0.0
-        self.__potentialDiff = 0.0
+        self._current = 0.0
+        self._potentialDiff = 0.0
 
     def updateCurrent(self, newC):
-        self.__current = newC
+        self._current = newC
 
     def getCurrent(self):
-        return self.__current
+        return self._current
 
     def getVoltage(self):
-        return self.__potentialDiff
+        return self._potentialDiff
 
     def updateVoltage(self, newV):
-        self.__potentialDiff = newV
+        self._potentialDiff = newV
 
 
 class Resistor(Wire):
     def __init__(self):
         super().__init__()
-        self.__resistance = 5.0
+        self._resistance = 5.0
 
     def getResistance(self):
-        return self.__resistance
+        return self._resistance
 
     def setResistance(self, newR):
-        self.__resistance = newR
+        self._resistance = newR
 
 
 # functions for using getters from other modules to avoid importing the whole module

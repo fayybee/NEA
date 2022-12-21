@@ -125,38 +125,38 @@ class Window:
         self.__clear.grid(row=0, column=2, sticky="NEWS")
 
     # grid button command
-    def gridClick(self, i, j):
+    def gridClick(self, row, col):
         if self.__selectedTool == "selected":
-            self.__selectedObject = self.__CircuitGrid.getObject(i, j)
+            self.__selectedObject = self.__CircuitGrid.getObject(row, col)
             try:
-                if i % 2 == 0 and j % 2 == 0:
-                    potential = objectGetVoltage(self.__selectedObject)
+                if row % 2 == 0 and col % 2 == 0:
+                    potential = self.__selectedObject.getVoltage()
                     self.__currentStatisticsLabel.config(text="potential: " + str(potential))
                     return
-                if (i % 2 == 0 and j % 2 == 1) or (i % 2 == 1 and j % 2 == 0):
+                if (row % 2 == 0 and col % 2 == 1) or (row % 2 == 1 and col % 2 == 0):
                     if isinstance(self.__selectedObject, Resistor):
-                        potentialDifference = objectGetVoltage(self.__selectedObject)
-                        current = objectGetCurrent(self.__selectedObject)
-                        resistance = objectGetResistance(self.__selectedObject)
+                        potentialDifference = self.__selectedObject.getVoltage()
+                        current = self.__selectedObject.getCurrent()
+                        resistance = self.__selectedObject.getResistance()
                         self.__currentStatisticsLabel.config(
                             text="p.d: " + str(potentialDifference) + "\n" + "current: " + str(
                                 current) + "\n" + "resistance: " + str(resistance))
                     elif isinstance(self.__selectedObject, Wire):
-                        current = objectGetCurrent(self.__selectedObject)
+                        current = self.__selectedObject.getCurrent()
                         self.__currentStatisticsLabel.config(text="p.d: 0.00" + "\n" + "current: " + str(current) + "\n" + "resistance: 0.00")
             except:
                 self.__currentStatisticsLabel.config(text="no component selected")
 
         # makes it so you can only join corners and add components between join point to reduce connection options
         elif self.__selectedTool == "":
-            self.__gridOfButtons[i][j].config(text=self.__selectedTool)
+            self.__gridOfButtons[row][col].config(text=self.__selectedTool)
         elif self.__selectedTool == "join" or self.__selectedTool == "+" or self.__selectedTool == "-":
-            if i % 2 == 0 and j % 2 == 0:
-                self.__gridOfButtons[i][j].config(text=self.__selectedTool)
-                self.__CircuitGrid.updateGrid(i, j, self.__selectedTool)
-        elif (i % 2 == 0 and j % 2 == 1) or (i % 2 == 1 and j % 2 == 0):
-            self.__gridOfButtons[i][j].config(text=self.__selectedTool)
-            self.__CircuitGrid.updateGrid(i, j, self.__selectedTool)
+            if row % 2 == 0 and col % 2 == 0:
+                self.__gridOfButtons[row][col].config(text=self.__selectedTool)
+                self.__CircuitGrid.updateGrid(row, col, self.__selectedTool)
+        elif (row % 2 == 0 and col % 2 == 1) or (row % 2 == 1 and col % 2 == 0):
+            self.__gridOfButtons[row][col].config(text=self.__selectedTool)
+            self.__CircuitGrid.updateGrid(row, col, self.__selectedTool)
 
     # tool bar button commands
     def selectSelected(self):
@@ -223,18 +223,20 @@ class Grid:
                 self.row.append(None)
             self.__grid.append(self.row)
         self.__circuitClass = None
+        self.__numRows = rows
+        self.__numCols = cols
 
     def updateGrid(self, i, j, selectedTool):
         if selectedTool == "+":
-            self.__grid[i][j] = ("+", SourceNode())
+            self.__grid[i][j] = SourceNode()
         if selectedTool == "-":
-            self.__grid[i][j] = ("-", GroundNode())
+            self.__grid[i][j] = GroundNode()
         if selectedTool == "wire":
-            self.__grid[i][j] = ("wire", Wire())
+            self.__grid[i][j] = Wire()
         if selectedTool == "res":
-            self.__grid[i][j] = ("resistor", Resistor())
+            self.__grid[i][j] = Resistor()
         if selectedTool == "join":
-            self.__grid[i][j] = ("join", ComponentNode())
+            self.__grid[i][j] = ComponentNode()
         if selectedTool == "":
             self.__grid[i][j] = None
 
@@ -251,9 +253,15 @@ class Grid:
 
     def getObject(self, i, j):
         if self.__grid[i][j] is not None:
-            return self.__grid[i][j][1]
+            return self.__grid[i][j]
         else:
             return None
+
+    def getNumRows(self):
+        return self.__numRows
+
+    def getNumCols(self):
+        return self.__numCols
 
 
 numberOfGridRows = 15

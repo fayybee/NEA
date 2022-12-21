@@ -1,4 +1,4 @@
-from ComponentClasses import objectGetVoltage, objectGetResistance, objectSetVoltage, objectSetCurrent
+import ComponentClasses
 
 minimumVoltageChange = 0.001
 
@@ -8,29 +8,65 @@ class CircuitGraph:
         self.__listNodes = {}
         self.__listEdges = {}
         self.__circuitGrid = CircuitGrid
+        self.findNodeConnections()
+        # for row in range(len(self.__circuitGrid)):
+        #     for col in range(len(self.__circuitGrid[row])):
+        #         if self.__circuitGrid[row][col] is not None:
+        #             if row % 2 == 0 and col % 2 == 0:
+        #                 voltage = None
+        #                 if self.__circuitGrid[row][col][0] == "+" or self.__circuitGrid[row][col][0] == "-":
+        #                     voltage = objectGetVoltage(self.__circuitGrid[row][col][1])
+        #                 self.__listNodes[(row, col)] = Node(voltage)
         for row in range(len(self.__circuitGrid)):  # FIXME optimising steps
-            for column in range(len(self.__circuitGrid[row])):
-                if self.__circuitGrid[row][column] is not None:
-                    if row % 2 == 0 and column % 2 == 0:
-                        voltage = None
-                        if self.__circuitGrid[row][column][0] == "+" or self.__circuitGrid[row][column][0] == "-":
-                            voltage = objectGetVoltage(self.__circuitGrid[row][column][1])
-                        self.__listNodes[(row, column)] = Node(voltage)
-        for row in range(len(self.__circuitGrid)):  # FIXME optimising steps
-            for column in range(len(self.__circuitGrid[row])):
-                if self.__circuitGrid[row][column] is not None:
+            for col in range(len(self.__circuitGrid[row])):
+                if self.__circuitGrid[row][col] is not None:
+                    if self.__circuitGrid[row][col].isWireLike():
+                        continue
                     try:
-                        if row % 2 == 0 and column % 2 == 1:
-                            inputNode = self.__listNodes[(row, column - 1)]
-                            outputNode = self.__listNodes[(row, column + 1)]
-                        elif row % 2 == 1 and column % 2 == 0:
-                            inputNode = self.__listNodes[(row - 1, column)]
-                            outputNode = self.__listNodes[(row + 1, column)]
+                        if row % 2 == 0 and col % 2 == 1:
+                            inputNode = self.__circuitGrid[row][col - 1].node
+                            outputNode = self.__circuitGrid[row][col + 1].node
+                        elif row % 2 == 1 and col % 2 == 0:
+                            inputNode = self.__circuitGrid[row - 1][col].node
+                            outputNode = self.__circuitGrid[row + 1][col].node
                         else:
                             continue
-                        self.__listEdges[(row, column)] = Edge(inputNode, outputNode, CircuitGrid[row][column])
+                        self.__listEdges[(row, col)] = Edge(inputNode, outputNode, CircuitGrid[row][col])
                     except:
                         print("circuit not complete")
+
+    def findNodeConnections(self):
+        for row in range(len(self.__circuitGrid)):
+            for col in range(len(self.__circuitGrid[row])):
+                cellValue = self.__circuitGrid[row][col]
+                if cellValue is not None:
+                    cellValue.node = None
+        for row in range(len(self.__circuitGrid)):
+            for col in range(len(self.__circuitGrid[row])):
+                cellValue = self.__circuitGrid[row][col]
+                if cellValue is None:
+                    continue
+                if cellValue.isWireLike() and cellValue.node is None:
+                    try:
+                        voltage = cellValue.getVoltage()
+                    except:
+                        voltage = None
+                    self.__listNodes[(row, col)] = Node(voltage)
+                    self.connect(row, col, self.__listNodes[(row, col)])
+
+    def connect(self, row, col, node):
+        if row < 0 or col < 0 or row > len(self.__circuitGrid) or col > len(self.__circuitGrid[row]):
+            return
+        cellValue = self.__circuitGrid[row][col]
+        if cellValue is not None:
+            return
+        if not cellValue.isWireLike():
+            return
+        cellValue.node = node
+        self.connect(row - 1, col, node)
+        self.connect(row + 1, col, node)
+        self.connect(row, col - 1, node)
+        self.connect(row, col + 1, node)
 
     def solveGraph(self):  # FIXME is calculating incorrect values
         while any((not node.isStable()) for node in
@@ -54,16 +90,24 @@ class CircuitGraph:
         self.updateComponentObjects()
 
     def updateComponentObjects(self):
+        for row in range(len(self.__circuitGrid)):  # FIXME optimising steps
+            for col in range(len(self.__circuitGrid[row])):
+                cellValue = self.__circuitGrid[row][col]
+                if cellValue is None:
+                    continue
+                if not cellValue.isVariable():
+                    # ensuring end nodes cannot be overwritten
+                    continue
+                try:
+                    cellValue.updateVoltage(round(cellValue.node.getVoltage(), 3))
+                except:
+                    continue
         # updating the component object in the grid so they can be accessed with the select tool
-        for key, node in self.__listNodes.items():
-            row, column = key[0], key[1]
-            if self.__circuitGrid[row][column][0] != "+" and self.__circuitGrid[row][column][0] != "-":  # just to
-                # make sure the source and ground cannot be overwritten if they were calculated wrong
-                objectSetVoltage(self.__circuitGrid[row][column][1], round(node.getVoltage(), 3))
         for key, edge in self.__listEdges.items():
-            row, column = key[0], key[1]
-            objectSetVoltage(self.__circuitGrid[row][column][1], round(edge.getPD(), 3))
-            objectSetCurrent(self.__circuitGrid[row][column][1], round((float(edge.getPD()) / float(edge.getResistance())), 3))
+            row, col = key[0], key[1]
+            cellValue = self.__circuitGrid[row][col]
+            cellValue.updateVoltage(round(edge.getPD(), 3))
+            cellValue.updateCurrent(round((float(edge.getPD()) / float(edge.getResistance())), 3))
 
     def printNodes(self):  # for debugging, used in tkinter front end
         for key, node in self.__listNodes.items():
@@ -117,10 +161,9 @@ class Node:
 
 class Edge:
     def __init__(self, inputNode, outputNode, circuitGridContents):
-        if circuitGridContents[0] == "wire":
-            self.__resistance = 0.000001
-        else:
-            self.__resistance = objectGetResistance(circuitGridContents[1])
+        if circuitGridContents.isWireLike():
+            return
+        self.__resistance = circuitGridContents.getResistance()
         self.__inputNode = inputNode
         self.__outputNode = outputNode
         inputNode.addEdge(self)

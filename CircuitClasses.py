@@ -17,6 +17,9 @@ class CircuitGraph:
         #                 if self.__circuitGrid[row][col][0] == "+" or self.__circuitGrid[row][col][0] == "-":
         #                     voltage = objectGetVoltage(self.__circuitGrid[row][col][1])
         #                 self.__listNodes[(row, col)] = Node(voltage)
+        self.findEdges(CircuitGrid)
+
+    def findEdges(self, CircuitGrid):
         for row in range(len(self.__circuitGrid)):  # FIXME optimising steps
             for col in range(len(self.__circuitGrid[row])):
                 if self.__circuitGrid[row][col] is not None:

@@ -20,10 +20,12 @@ class CircuitGraph:
         self.findEdges(CircuitGrid)
 
     def findEdges(self, CircuitGrid):
+        print("Find Edges")
         for row in range(len(self.__circuitGrid)):  # FIXME optimising steps
             for col in range(len(self.__circuitGrid[row])):
                 if self.__circuitGrid[row][col] is not None:
                     if self.__circuitGrid[row][col].isWireLike():
+                        print(f"{col}, {row} is wirelike")
                         continue
                     try:
                         if row % 2 == 0 and col % 2 == 1:
@@ -34,6 +36,8 @@ class CircuitGraph:
                             outputNode = self.__circuitGrid[row + 1][col].node
                         else:
                             continue
+                        print(f"{col}, {row} is Edge - nodes are {inputNode} and {outputNode}")
+
                         self.__listEdges[(row, col)] = Edge(inputNode, outputNode, CircuitGrid[row][col])
                     except:
                         print("circuit not complete")
@@ -50,21 +54,24 @@ class CircuitGraph:
                 if cellValue is None:
                     continue
                 if cellValue.isWireLike() and cellValue.node is None:
-                    try:
-                        voltage = cellValue.getVoltage()
-                    except:
-                        voltage = None
-                    self.__listNodes[(row, col)] = Node(voltage)
+                    self.__listNodes[(row, col)] = Node()
+                    print(f"Made a node at {col} {row} = {self.__listNodes[(row, col)]}")
                     self.connect(row, col, self.__listNodes[(row, col)])
+
 
     def connect(self, row, col, node):
         if row < 0 or col < 0 or row > len(self.__circuitGrid) or col > len(self.__circuitGrid[row]):
             return
         cellValue = self.__circuitGrid[row][col]
-        if cellValue is not None:
+        if cellValue is None:
+            return
+        if cellValue.node is not None:
             return
         if not cellValue.isWireLike():
             return
+        if not cellValue.isVariable():
+            node.setFixedVoltage(cellValue.getVoltage())
+        print(f"Connect {col} {row} {node}")
         cellValue.node = node
         self.connect(row - 1, col, node)
         self.connect(row + 1, col, node)
@@ -72,8 +79,8 @@ class CircuitGraph:
         self.connect(row, col + 1, node)
 
     def solveGraph(self):  # FIXME is calculating incorrect values
-        while any((not node.isStable()) for node in
-                  self.__listNodes.values()):  # while any of the nodes are not stable do loop
+        while any((not node.isStable()) for node in self.__listNodes.values()):  # while any of the nodes are not
+            # stable do loop
             for node in self.__listNodes.values():
                 if not node.isFixed():
                     numerator = 0.0
@@ -133,6 +140,12 @@ class Node:
         else:
             self.__voltage = 0.0
         self.__fixedVoltage = vFixed
+
+    def setFixedVoltage(self, voltage):
+        assert self.__fixedVoltage is None, "Assigning a second fixed voltage to a node"
+        self.__fixedVoltage=voltage
+        self.__voltage = voltage
+        self.__stable = True
 
     def getVoltage(self):
         return float(self.__voltage)

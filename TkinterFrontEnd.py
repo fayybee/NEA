@@ -213,7 +213,7 @@ class Window:
         self.__window.mainloop()
 
 
-# grid class which holds the objects and the symbol connected to it
+# grid class which holds the objects
 class Grid:
     def __init__(self, rows, cols):
         self.__grid = []

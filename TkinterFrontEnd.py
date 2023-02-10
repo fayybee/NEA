@@ -1,4 +1,4 @@
-from ComponentClasses import *
+from classesofcomponents import *
 from CircuitClasses import *
 # from GraphWindow import *
 import tkinter as tk

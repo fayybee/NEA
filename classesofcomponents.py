@@ -1,5 +1,5 @@
 #FIXME make overarching object as mny have same attributes
-
+############################################
 class ComponentNode:
     def __init__(self, voltage=None, isWireLike=True, isVariable=True):
         self._potential = voltage

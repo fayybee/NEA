@@ -1,4 +1,4 @@
-import ComponantClasses
+from ComponantClasses import *
 
 minimumVoltageChange = 0.00001
 
@@ -15,16 +15,17 @@ class CircuitGraph:
         for row in range(self.__circuitGridRows):
             for col in range(self.__circuitGridCols):
                 component = self.__circuitGrid[row][col]
-                if component is not None and component.isNosey():  # makes sure position isn't empty then checks to
+                if component is not None and not component.isEdgy():  # makes sure position isn't empty then checks to
                     # see if its a node
                     voltage = None
                     if not component.isVariable():
-                        voltage = component.getPotential()  # if component is a source or ground node voltage won't
-                        # be None
-                    newNode = Node(
-                        voltage)  # makes a graph node and if voltage is not None then the node voltage will be fixed
-                    self.__listNodes[
-                        (row, col)] = newNode  # adds the node to a dictionary with corresponding grid position
+                        # if the component is not variable the assigned potential must stay the same
+                        voltage = component.getPotential()
+                        # voltage is equal to potential of the non variable component
+                    newNode = Node(voltage)
+                    # makes a graph node and if voltage is not None then the node voltage will be fixed
+                    self.__listNodes[(row, col)] = newNode
+                    # adds the node to a dictionary with corresponding grid position as key
                     component.assignNode(newNode)  # assigns the node to the component object for safe keeping
 
     def findEdges(self):
@@ -46,15 +47,18 @@ class CircuitGraph:
                         print("brother your circuit is incomplete")
 
     def solveGraph(self):
-        while any((not node.isStable()) for node in self.__listNodes.Values()):  # .values returns a list of values in
-            # the dictionary a a list while any node in the dictionary is unstable do the solve loop
+        self.findNodes()
+        self.findEdges()
+        while any((not node.isStable()) for node in self.__listNodes.values()):  # .values returns a list of values in
+            # the dictionary as a list
+            # while any node in the dictionary is unstable do the solve loop
             for node in self.__listNodes.values():
                 if not node.isFixed():
                     numerator = 0.0
                     denominator = 0.0
                     for edge in node.getEdges():
-                        otherEdge = edge.getOtherNodes(node)
-                        voltage = otherEdge.getVoltage
+                        otherEdge = edge.getOtherNode(node)
+                        voltage = otherEdge.getVoltage()
                         resistance = edge.getResistance()
                         denominator += 1 / resistance
                         numerator += voltage / resistance
@@ -68,23 +72,14 @@ class CircuitGraph:
         self.updateComponentObjects()
 
     def updateComponentObjects(self):
-        for row in range(self.__circuitGridRows):
-            for col in range(self.__circuitGridCols):
-                component = self.__circuitGrid[row][col]
-                if component is None:
-                    continue
-                if not component.isVariable():
-                    # ensuring end nodes cannot be overwritten
-                    continue
-                try:
-                    component.updateVoltage(round(component.node.getVoltage(), 3))  # tries to update the component
-                    # stats to calculated value to 3 decimal places
-                except:
-                    continue
+        for key, node in self.__listNodes.items():
+            row, col = key[0], key[1]
+            component = self.__circuitGrid[row][col]
+            component.updatePotential(round(node.getVoltage(), 3))
         for key, edge in self.__listEdges.items():
             row, col = key[0], key[1]
             component = self.__circuitGrid[row][col]
-            component.updateVoltage(round(edge.getPD(), 3))
+            component.updatePotentialDifference(round(edge.getPD(), 3))
             component.updateCurrent(round((float(edge.getPD()) / float(edge.getResistance())), 3))
 
     def cleanAll(self):

@@ -93,19 +93,15 @@ class Window:
         self.__buttonWire.grid(row=6, sticky="NEWS")
         self.__buttonResistor = tk.Button(self.__toolBarFrame, text=chr(174), command=self.resistorButtonClick)
         self.__buttonResistor.grid(row=7, sticky="NEWS")
-        self.__solveButton = tk.Button(self.__toolBarFrame, text="solve", command=self.solve)
-        self.__solveButton.grid(row=8)
-
-    def solve(self):
-        self.__circuitGridClass.solve()
 
     def gridClick(self, rowNum, colNum):
         self.wipeSelectedCellColour()
         if self.__selectedTool == "select":
             self.updateStats(colNum, rowNum)  # if select tool is chosen stats of selected component is displayed
         else:  # otherwise grid is updated with selected component
-            if self.__selectedTool is None:
+            if self.__selectedTool is None:  # only for if the clever tool is selected
                 self.__buttonMatrix[rowNum][colNum].config(text="")
+                self.__circuitGridClass.updateGrid(rowNum, colNum, self.__selectedTool)
             elif self.__selectedTool == chr(176) or self.__selectedTool == "+" or self.__selectedTool == "-":
                 if rowNum % 2 == 0 and colNum % 2 == 0:
                     # nodes can only be placed in even areas to prevent then from being next to each other
@@ -116,6 +112,8 @@ class Window:
                 # this makes calculations easier because it is obvious what they are connected to
                 self.__buttonMatrix[rowNum][colNum].config(text=self.__selectedTool)
                 self.__circuitGridClass.updateGrid(rowNum, colNum, self.__selectedTool)
+        self.__circuitGridClass.solve()  # this is called at the end of every button click to make it seam like it is
+        # updating continuously
 
     def updateStats(self, colNum, rowNum):
         self.__selectedComponent = self.__circuitGridClass.getObject(rowNum, colNum)
@@ -140,31 +138,38 @@ class Window:
     # setting tool based on button clicked
     def selectButtonClick(self):
         self.__selectedTool = "select"
+        self.__circuitGridClass.solve()
 
     def clearButtonClick(self):
         self.__selectedTool = None
+        self.__circuitGridClass.solve()
 
     def joinButtonClick(self):
         self.__selectedTool = chr(176)
+        self.__circuitGridClass.solve()
 
     def sourceButtonClick(self):
         self.__selectedTool = "+"
+        self.__circuitGridClass.solve()
 
     def groundButtonClick(self):
         self.__selectedTool = "-"
+        self.__circuitGridClass.solve()
 
     def wireButtonClick(self):
         self.__selectedTool = chr(126)
+        self.__circuitGridClass.solve()
 
     def resistorButtonClick(self):
         self.__selectedTool = chr(174)
+        self.__circuitGridClass.solve()
+
+    def solveCircuit(self):
+        self.__circuitGridClass.solve()
 
     # runs window
     def run(self):
         self.__window.mainloop()
-        # while True:
-        #     self.__circuitGridClass.solve()
-        #     time.sleep(2)
 
 
 class Grid:

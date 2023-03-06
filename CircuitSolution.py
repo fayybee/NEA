@@ -44,7 +44,7 @@ class CircuitGraph:
                             continue
                         self.__listEdges[row, col] = Edge(inputNode, outputNode, component)
                     except:
-                        print("brother your circuit is incomplete")
+                        pass  # ignores when circuit is incomplete
 
     def solveGraph(self):
         self.findNodes()
@@ -53,20 +53,23 @@ class CircuitGraph:
             # the dictionary as a list
             # while any node in the dictionary is unstable do the solve loop
             for node in self.__listNodes.values():
-                if not node.isFixed():
-                    numerator = 0.0
-                    denominator = 0.0
-                    for edge in node.getEdges():
-                        otherEdge = edge.getOtherNode(node)
-                        voltage = otherEdge.getVoltage()
-                        resistance = edge.getResistance()
-                        denominator += 1 / resistance
-                        numerator += voltage / resistance
-                        # takes the voltage of the node either side of the current node and uses it
-                        # to calculate the voltage estimate of the current node based on the resistance between
-                    node.setVoltageEstimate(
-                        numerator / denominator)  # resistance cancels out and whats left is a guess of the voltage
-                    # based on node before and after (like an average)
+                try:
+                    if not node.isFixed():
+                        numerator = 0.0
+                        denominator = 0.0
+                        for edge in node.getEdges():
+                            otherEdge = edge.getOtherNode(node)
+                            voltage = otherEdge.getVoltage()
+                            resistance = edge.getResistance()
+                            denominator += 1 / resistance
+                            numerator += voltage / resistance
+                            # takes the voltage of the node either side of the current node and uses it
+                            # to calculate the voltage estimate of the current node based on the resistance between
+                        node.setVoltageEstimate(
+                            numerator / denominator)  # resistance cancels out and whats left is a guess of the voltage
+                        # based on node before and after (like an average)
+                except:
+                    pass  # ignores when circuit is incomplete
             for node in self.__listNodes.values():
                 node.updateVoltage()
         self.updateComponentObjects()
@@ -75,12 +78,12 @@ class CircuitGraph:
         for key, node in self.__listNodes.items():
             row, col = key[0], key[1]
             component = self.__circuitGrid[row][col]
-            component.updatePotential(round(node.getVoltage(), 3))
+            component.updatePotential(node.getVoltage())
         for key, edge in self.__listEdges.items():
             row, col = key[0], key[1]
             component = self.__circuitGrid[row][col]
-            component.updatePotentialDifference(round(edge.getPD(), 3))
-            component.updateCurrent(round((float(edge.getPD()) / float(edge.getResistance())), 3))
+            component.updatePotentialDifference(edge.getPD())
+            component.updateCurrent(edge.getPD() / float(edge.getResistance()))
 
     def cleanAll(self):
         self.__listNodes.clear()

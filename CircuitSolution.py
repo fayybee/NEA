@@ -75,6 +75,7 @@ class CircuitGraph:
         self.updateComponentObjects()
 
     def updateComponentObjects(self):
+        # updates the objects in the grid class (from front end) so front end can access correct data
         for key, node in self.__listNodes.items():
             row, col = key[0], key[1]
             component = self.__circuitGrid[row][col]
@@ -82,8 +83,8 @@ class CircuitGraph:
         for key, edge in self.__listEdges.items():
             row, col = key[0], key[1]
             component = self.__circuitGrid[row][col]
-            component.updatePotentialDifference(edge.getPD())
-            component.updateCurrent(edge.getPD() / float(edge.getResistance()))
+            component.updatePotentialDifference(abs(edge.getPD()))
+            component.updateCurrent(abs(edge.getPD() / float(edge.getResistance())))
 
     def cleanAll(self):
         self.__listNodes.clear()

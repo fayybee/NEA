@@ -46,11 +46,12 @@ class Ground(Join):
 
 
 class Conductor(Component):
-    def __init__(self, resistance=0.000001, isVariable=False):
+    def __init__(self, resistance=0.000001, isVariable=False, isWire=True):
         super().__init__(isVariable, True)
         self.__current = 0.0
         self.__potentialDiff = 0.0
         self.__resistance = resistance
+        self.__isWire = isWire
 
     def updateCurrent(self, newC):
         self.__current = newC
@@ -71,7 +72,10 @@ class Conductor(Component):
         if self.__isVariable:
             self.__resistance = newR
 
+    def isWire(self):
+        return self.__isWire
+
 
 class Resistor(Conductor):
     def __init__(self):
-        super().__init__(5, True)
+        super().__init__(5, True, False)

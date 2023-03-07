@@ -1,5 +1,4 @@
 import tkinter as tk
-import time
 from ComponantClasses import *
 from CircuitSolution import *
 
@@ -23,8 +22,7 @@ class Window:
 
         # window configuring
         self.__window = tk.Tk()
-        self.__window.rowconfigure(0, minsize=self.__gridHeight / 2)
-        self.__window.rowconfigure(1, minsize=self.__gridHeight / 2)
+        self.__window.rowconfigure([0, 1], minsize=self.__gridHeight / 2)
         self.__window.columnconfigure(0, minsize=self.__toolBarWidth)
         self.__window.columnconfigure(1, minsize=self.__gridWidth)
         self.__window.columnconfigure(2, minsize=self.__graphFrameWidth)
@@ -54,7 +52,11 @@ class Window:
         self.__statsLabel = tk.Label(self.__statsFrame, text="STATISTICS")
         self.__statsLabel.grid(row=0, sticky="N")
         self.__currentStats = tk.Label(self.__statsFrame, text="no component \n selected")
-        self.__currentStats.grid(sticky="EW")
+        self.__currentStats.grid(row=1, sticky="EW")
+        self.__componentEditLabel = tk.Label(self.__statsFrame, text="")
+        self.__componentEditLabel.grid(row=2, sticky="NEWS")
+        self.__componentResistanceNum = tk.Label(self.__statsFrame, text="0")
+        self.__componentResistanceNum.grid(row=3, column=0, sticky="NS")
 
         # creating grid buttons
         self.__buttonMatrix = []
@@ -94,10 +96,18 @@ class Window:
         self.__buttonResistor = tk.Button(self.__toolBarFrame, text=chr(174), command=self.resistorButtonClick)
         self.__buttonResistor.grid(row=7, sticky="NEWS")
 
+        # creating stats button
+        self.__resistanceUpButton = tk.Button(self.__statsFrame, text="+")
+        self.__resistanceUpButton.grid(row=3, column=0, sticky="NES")
+        self.__resistanceDownButton = tk.Button(self.__statsFrame, text="-")
+        self.__resistanceDownButton.grid(row=3, column=0, sticky="WNS")
+
     def gridClick(self, rowNum, colNum):
         self.wipeSelectedCellColour()
         if self.__selectedTool == "select":
-            self.updateStats(colNum, rowNum)  # if select tool is chosen stats of selected component is displayed
+            self.__selectedComponent = self.__circuitGridClass.getObject(rowNum, colNum)
+            self.updateStats(rowNum,colNum)  # if select tool is chosen stats of selected component is displayed
+            self.updateComponentEditor()
         else:  # otherwise grid is updated with selected component
             if self.__selectedTool is None:  # only for if the clever tool is selected
                 self.__buttonMatrix[rowNum][colNum].config(text="")
@@ -115,12 +125,11 @@ class Window:
         self.__circuitGridClass.solve()  # this is called at the end of every button click to make it seam like it is
         # updating continuously
 
-    def updateStats(self, colNum, rowNum):
-        self.__selectedComponent = self.__circuitGridClass.getObject(rowNum, colNum)
-        self.__buttonMatrix[rowNum][colNum].config(bg="light grey")  # makes it easy to see what is selected
+    def updateStats(self, row, col):
+        self.__buttonMatrix[row][col].config(bg="light grey")  # makes it easy to see what is selected
         try:
             if not self.__selectedComponent.isEdgy():
-                potential = self.__selectedComponent.getPotential()
+                potential = round(self.__selectedComponent.getPotential(),3)
                 self.__currentStats.config(text=f"Potential: {potential}")
             else:
                 potentialDifference = round(self.__selectedComponent.getPotentialDifference(), 3)
@@ -129,6 +138,14 @@ class Window:
                 self.__currentStats.config(text=f"Res: {resistance} \np.d: {potentialDifference} \nCur: {current} ")
         except:
             self.__currentStats.config(text="no component \n selected")
+
+    def updateComponentEditor(self):
+        if self.__selectedComponent.isEdgy() and not self.__selectedComponent.isWire():
+            self.__componentEditLabel.config(text="Resistance")
+        elif not self.__selectedComponent.isEdgy():
+            self.__componentEditLabel.config(text="Potential")
+        else:
+            self.__componentEditLabel.config(text="")
 
     def wipeSelectedCellColour(self):  # prevents everything from looking selected so new selection is easy to see
         for i in range(len(self.__buttonMatrix)):

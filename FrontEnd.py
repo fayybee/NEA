@@ -1,17 +1,25 @@
-import tkinter as tk
 from ComponantClasses import *
 from CircuitSolution import *
+import tkinter as tk
+import pandas as pd
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 
 class Window:
     def __init__(self, rows, cols):
-        # grid variables
+        # grid constants
         self.__gridNumberOfRows = rows
         self.__gridNumberOfColumns = cols
         self.__gridWidth = 500
         self.__gridHeight = 500
         self.__toolBarWidth = 100
         self.__graphFrameWidth = 250
+
+        # stats variables
+        self.__currentDataPoints = []
+        self.__voltageDataPoints = []
+        self.__timeDataPoints = []
 
         # instantiate grid class
         self.__circuitGridClass = Grid(rows, cols)
@@ -20,7 +28,7 @@ class Window:
         self.__selectedComponent = None
         self.__selectedTool = None
 
-        # window configuring
+        # window configuration
         self.__window = tk.Tk()
         self.__window.rowconfigure([0, 1], minsize=self.__gridHeight / 2)
         self.__window.columnconfigure(0, minsize=self.__toolBarWidth)
@@ -40,6 +48,7 @@ class Window:
         # frame configuration
         self.__toolBarFrame.columnconfigure(0, minsize=self.__toolBarWidth)
         self.__statsFrame.columnconfigure(0, minsize=self.__toolBarWidth)
+        self.__graphFrame.rowconfigure([0, 1, 2], minsize=(self.__gridHeight / 3) - 2)
 
         for i in range(self.__gridNumberOfRows):
             self.__gridFrame.rowconfigure(i, minsize=int(self.__gridWidth / self.__gridNumberOfRows))
@@ -101,6 +110,45 @@ class Window:
         self.__componentUpButton.grid(row=3, column=0, sticky="NES")
         self.__componentDownButton = tk.Button(self.__statsFrame, text="-", command=self.decreaseButtonClick)
         self.__componentDownButton.grid(row=3, column=0, sticky="WNS")
+
+        # graph data setup
+        currentVoltageData = {"current": self.__currentDataPoints, "voltage": self.__voltageDataPoints}
+        currentVoltageDataFrame = pd.DataFrame(currentVoltageData)
+        currentTimeData = {"current": self.__currentDataPoints, "time": self.__timeDataPoints}
+        currentTimeDataFrame = pd.DataFrame(currentTimeData)
+        voltageTimeData = {"voltage": self.__voltageDataPoints, "time": self.__timeDataPoints}
+        voltageTimeDataFrame = pd.DataFrame(voltageTimeData)
+
+        # graph setup
+        IVFigure = Figure(figsize=(3, 1), dpi=100)
+        IVGraph = IVFigure.add_subplot(111)
+        IVGraphType = FigureCanvasTkAgg(IVFigure, self.__graphFrame)
+        IVGraphType.get_tk_widget().grid(row=0, sticky="NEWS")
+        currentVoltageDataFrame = currentVoltageDataFrame[["current", "voltage"]].groupby("voltage").sum()
+        currentVoltageDataFrame.plot(kind="line", legend=False, ax=IVGraph, color="r", marker=".", fontsize=5)
+        IVGraph.set_title("IV graph", fontsize=7)
+        IVGraph.set_xlabel("voltage")
+        IVGraph.set_ylabel("current")
+
+        ITFigure = Figure(figsize=(3, 1), dpi=100)
+        ITGraph = ITFigure.add_subplot(111)
+        ITGraphType = FigureCanvasTkAgg(ITFigure, self.__graphFrame)
+        ITGraphType.get_tk_widget().grid(row=1, sticky="NEWS")
+        currentTimeDataFrame = currentTimeDataFrame[["current", "time"]].groupby("time").sum()
+        currentTimeDataFrame.plot(kind="line", legend=False, ax=ITGraph, color="r", marker=".", fontsize=5)
+        ITGraph.set_title("It graph", fontsize=7)
+        ITGraph.set_xlabel("time")
+        ITGraph.set_ylabel("current")
+
+        VTFigure = Figure(figsize=(3, 1), dpi=100)
+        VTGraph = VTFigure.add_subplot(111)
+        VTGraphType = FigureCanvasTkAgg(VTFigure, self.__graphFrame)
+        VTGraphType.get_tk_widget().grid(row=2, sticky="NEWS")
+        voltageTimeDataFrame = voltageTimeDataFrame[["voltage", "time"]].groupby("time").sum()
+        voltageTimeDataFrame.plot(kind="line", legend=False, ax=VTGraph, color="r", marker=".", fontsize=5)
+        VTGraph.set_title("Vt graph", fontsize=7)
+        VTGraph.set_xlabel("time")
+        VTGraph.set_ylabel("voltage")
 
     def gridClick(self, rowNum, colNum):
         self.solveCircuit()

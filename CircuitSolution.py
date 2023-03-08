@@ -12,6 +12,9 @@ class CircuitGraph:
         self.__circuitGridCols = len(self.__circuitGrid[1])
 
     def findNodes(self):
+        # finds the nodes ( corresponds to join or source components) and adds them to a dictionary
+        # nodes in the dictionary are later assigned potentials
+        # using their associated edges and the node the other end of it to calculate
         for row in range(self.__circuitGridRows):
             for col in range(self.__circuitGridCols):
                 component = self.__circuitGrid[row][col]
@@ -29,22 +32,29 @@ class CircuitGraph:
                     component.assignNode(newNode)  # assigns the node to the component object for safe keeping
 
     def findEdges(self):
+        # makes a dictionary of the edges
+        # (key = graph coordinate of corresponding component)
+        # (value = Edge object (holding the input node, output node and associated component object)
         for row in range(self.__circuitGridRows):
             for col in range(self.__circuitGridCols):
                 component = self.__circuitGrid[row][col]
                 if component is not None:
                     try:
-                        if row % 2 == 0 and col % 2 == 1:
+                        if row % 2 == 0 and col % 2 == 1:  # position only edge type component can be placed
                             inputNode = self.__circuitGrid[row][col - 1].getAssignedNode()
                             outputNode = self.__circuitGrid[row][col + 1].getAssignedNode()
-                        elif row % 2 == 1 and col % 2 == 0:
+                            # checks for the nodes to the left and right
+                        elif row % 2 == 1 and col % 2 == 0:  # position only edge type component can be placed
                             inputNode = self.__circuitGrid[row - 1][col].getAssignedNode()
                             outputNode = self.__circuitGrid[row + 1][col].getAssignedNode()
+                            # checks for nodes above and bellow
                         else:
-                            continue
+                            continue  # not a valid position for an edge type component so not considered
                         self.__listEdges[row, col] = Edge(inputNode, outputNode, component)
                     except:
-                        pass  # ignores when circuit is incomplete
+                        component.updateCurrent(0.0)
+                        # if the edge is not connected on both sides it will error
+                        # we know that it isn't connected to anything therefore current in component is 0
 
     def solveGraph(self):
         self.findNodes()
@@ -53,11 +63,11 @@ class CircuitGraph:
             # the dictionary as a list
             # while any node in the dictionary is unstable do the solve loop
             for node in self.__listNodes.values():
-                try:
-                    if not node.isFixed():
-                        numerator = 0.0
-                        denominator = 0.0
-                        for edge in node.getEdges():
+                if not node.isFixed():
+                    numerator = 0.0
+                    denominator = 0.0
+                    for edge in node.getEdges():
+                        try:
                             otherEdge = edge.getOtherNode(node)
                             voltage = otherEdge.getVoltage()
                             resistance = edge.getResistance()
@@ -65,11 +75,12 @@ class CircuitGraph:
                             numerator += voltage / resistance
                             # takes the voltage of the node either side of the current node and uses it
                             # to calculate the voltage estimate of the current node based on the resistance between
-                        node.setVoltageEstimate(
-                            numerator / denominator)  # resistance cancels out and whats left is a guess of the voltage
+                        except:
+                            pass  # errors if circuit is not complete but no action needed as dealt with when finding
+                            # edges
+                        node.setVoltageEstimate(numerator / denominator)
+                        # resistance cancels out and whats left is a guess of the voltage
                         # based on node before and after (like an average)
-                except:
-                    pass  # ignores when circuit is incomplete
             for node in self.__listNodes.values():
                 node.updateVoltage()
         self.updateComponentObjects()

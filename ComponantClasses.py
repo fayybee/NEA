@@ -1,23 +1,28 @@
 class Component:
-    def __init__(self, isVariable=True, isEdgy=False):
-        self.__isVariable = isVariable
+    def __init__(self, isVariable=True, isEdgy=False, isWire=False):
+        self._isVariable = isVariable
         self.__edgy = isEdgy
+        self.__isWire = isWire
 
     def isVariable(self):
-        return self.__isVariable
+        return self._isVariable
 
     def isEdgy(self):
         return self.__edgy
+
+    def isWire(self):
+        return self.__isWire
 
 
 ###
 
 
 class Join(Component):
-    def __init__(self, voltage=None, isVariable=True):
+    def __init__(self, voltage=None, isVariable=True, isSource=False):
         super().__init__(isVariable)
         self.__potential = voltage
         self.__node = None
+        self.__isSource = isSource
 
     def updatePotential(self, newVoltage):
         self.__potential = newVoltage
@@ -31,10 +36,13 @@ class Join(Component):
     def getAssignedNode(self):
         return self.__node
 
+    def isSource(self):
+        return self.__isSource
+
 
 class Source(Join):
     def __init__(self):
-        super().__init__(5.0, False)
+        super().__init__(5.0, False, True)
 
 
 class Ground(Join):
@@ -47,11 +55,10 @@ class Ground(Join):
 
 class Conductor(Component):
     def __init__(self, resistance=0.000001, isVariable=False, isWire=True):
-        super().__init__(isVariable, True)
+        super().__init__(isVariable, True, isWire)
         self.__current = 0.0
         self.__potentialDiff = 0.0
         self.__resistance = resistance
-        self.__isWire = isWire
 
     def updateCurrent(self, newC):
         self.__current = newC
@@ -69,11 +76,8 @@ class Conductor(Component):
         return self.__resistance
 
     def setResistance(self, newR):
-        if self.__isVariable:
+        if self._isVariable:
             self.__resistance = newR
-
-    def isWire(self):
-        return self.__isWire
 
 
 class Resistor(Conductor):

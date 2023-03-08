@@ -55,8 +55,8 @@ class Window:
         self.__currentStats.grid(row=1, sticky="EW")
         self.__componentEditLabel = tk.Label(self.__statsFrame, text="")
         self.__componentEditLabel.grid(row=2, sticky="NEWS")
-        self.__componentResistanceNum = tk.Label(self.__statsFrame, text="0")
-        self.__componentResistanceNum.grid(row=3, column=0, sticky="NS")
+        self.__componentEditStatNum = tk.Label(self.__statsFrame, text="0")
+        self.__componentEditStatNum.grid(row=3, column=0, sticky="NS")
 
         # creating grid buttons
         self.__buttonMatrix = []
@@ -97,16 +97,18 @@ class Window:
         self.__buttonResistor.grid(row=7, sticky="NEWS")
 
         # creating stats button
-        self.__resistanceUpButton = tk.Button(self.__statsFrame, text="+")
-        self.__resistanceUpButton.grid(row=3, column=0, sticky="NES")
-        self.__resistanceDownButton = tk.Button(self.__statsFrame, text="-")
-        self.__resistanceDownButton.grid(row=3, column=0, sticky="WNS")
+        self.__componentUpButton = tk.Button(self.__statsFrame, text="+", command=self.increaseButtonClick)
+        self.__componentUpButton.grid(row=3, column=0, sticky="NES")
+        self.__componentDownButton = tk.Button(self.__statsFrame, text="-", command=self.decreaseButtonClick)
+        self.__componentDownButton.grid(row=3, column=0, sticky="WNS")
 
     def gridClick(self, rowNum, colNum):
+        self.solveCircuit()
         self.wipeSelectedCellColour()
         if self.__selectedTool == "select":
             self.__selectedComponent = self.__circuitGridClass.getObject(rowNum, colNum)
-            self.updateStats(rowNum,colNum)  # if select tool is chosen stats of selected component is displayed
+            self.__buttonMatrix[rowNum][colNum].config(bg="light grey")  # makes it easy to see what is selected
+            self.updateStats()  # if select tool is chosen stats of selected component is displayed
             self.updateComponentEditor()
         else:  # otherwise grid is updated with selected component
             if self.__selectedTool is None:  # only for if the clever tool is selected
@@ -125,11 +127,10 @@ class Window:
         self.__circuitGridClass.solve()  # this is called at the end of every button click to make it seam like it is
         # updating continuously
 
-    def updateStats(self, row, col):
-        self.__buttonMatrix[row][col].config(bg="light grey")  # makes it easy to see what is selected
+    def updateStats(self):
         try:
             if not self.__selectedComponent.isEdgy():
-                potential = round(self.__selectedComponent.getPotential(),3)
+                potential = round(self.__selectedComponent.getPotential(), 3)
                 self.__currentStats.config(text=f"Potential: {potential}")
             else:
                 potentialDifference = round(self.__selectedComponent.getPotentialDifference(), 3)
@@ -140,12 +141,19 @@ class Window:
             self.__currentStats.config(text="no component \n selected")
 
     def updateComponentEditor(self):
-        if self.__selectedComponent.isEdgy() and not self.__selectedComponent.isWire():
-            self.__componentEditLabel.config(text="Resistance")
-        elif not self.__selectedComponent.isEdgy():
-            self.__componentEditLabel.config(text="Potential")
-        else:
+        try:
+            if self.__selectedComponent.isEdgy() and not self.__selectedComponent.isWire():
+                self.__componentEditLabel.config(text="Resistance")
+                self.__componentEditStatNum.config(text=str(round(self.__selectedComponent.getResistance(), 3)))
+            elif self.__selectedComponent.isWire():
+                self.__componentEditLabel.config(text="")
+                self.__componentEditStatNum.config(text="0.0")
+            elif not self.__selectedComponent.isEdgy():
+                self.__componentEditLabel.config(text="Potential")
+                self.__componentEditStatNum.config(text=str(round(self.__selectedComponent.getPotential(), 3)))
+        except:
             self.__componentEditLabel.config(text="")
+            self.__componentEditStatNum.config(text="-")
 
     def wipeSelectedCellColour(self):  # prevents everything from looking selected so new selection is easy to see
         for i in range(len(self.__buttonMatrix)):
@@ -181,6 +189,49 @@ class Window:
         self.__selectedTool = chr(174)
         self.__circuitGridClass.solve()
 
+    # editing component stats button commands
+    def increaseButtonClick(self):
+        try:
+            if self.__selectedComponent.isEdgy() and not self.__selectedComponent.isWire():
+                self.increaseResistance()
+                self.__componentEditStatNum.config(text=str(self.__selectedComponent.getResistance()))
+            elif self.__selectedComponent.isSource():
+                self.increasePotential()
+                self.__componentEditStatNum.config(text=str(self.__selectedComponent.getPotential()))
+            self.solveCircuit()
+            self.updateStats()
+        except:
+            pass
+
+    def decreaseButtonClick(self):
+        try:
+            if self.__selectedComponent.isEdgy() and not self.__selectedComponent.isWire():
+                self.decreaseResistance()
+                self.__componentEditStatNum.config(text=str(self.__selectedComponent.getResistance()))
+            elif self.__selectedComponent.isSource():
+                self.decreasePotential()
+                self.__componentEditStatNum.config(text=str(self.__selectedComponent.getPotential()))
+            self.solveCircuit()
+            self.updateStats()
+
+        except:
+            pass
+
+    def increaseResistance(self):
+        self.__selectedComponent.setResistance(self.__selectedComponent.getResistance() + 1)
+
+    def decreaseResistance(self):
+        if self.__selectedComponent.getResistance() > 1:
+            self.__selectedComponent.setResistance(self.__selectedComponent.getResistance() - 1)
+
+    def increasePotential(self):
+        self.__selectedComponent.updatePotential(self.__selectedComponent.getPotential() + 1)
+
+    def decreasePotential(self):
+        if self.__selectedComponent.getPotential() > 0:
+            self.__selectedComponent.updatePotential(self.__selectedComponent.getPotential() - 1)
+
+    # solve
     def solveCircuit(self):
         self.__circuitGridClass.solve()
 

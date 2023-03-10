@@ -1,9 +1,11 @@
-from ComponantClasses import *
-from CircuitSolution import *
 import tkinter as tk
+
 import pandas as pd
-from matplotlib.figure import Figure
+import time
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+
+from GridClass import *
 
 
 class Window:
@@ -20,6 +22,7 @@ class Window:
         self.__currentDataPoints = []
         self.__voltageDataPoints = []
         self.__timeDataPoints = []
+        self.__selectedGraphPlotComponent = None
 
         # instantiate grid class
         self.__circuitGridClass = Grid(rows, cols)
@@ -104,6 +107,8 @@ class Window:
         self.__buttonWire.grid(row=6, sticky="NEWS")
         self.__buttonResistor = tk.Button(self.__toolBarFrame, text=chr(174), command=self.resistorButtonClick)
         self.__buttonResistor.grid(row=7, sticky="NEWS")
+        self.__buttonSelectGraphPlotComponent = tk.Button(self.__toolBarFrame, text="plot this", command=self.plotSelectButtonClick)
+        self.__buttonSelectGraphPlotComponent.grid(row=8, sticky="NEWS")
 
         # creating stats button
         self.__componentUpButton = tk.Button(self.__statsFrame, text="+", command=self.increaseButtonClick)
@@ -111,6 +116,50 @@ class Window:
         self.__componentDownButton = tk.Button(self.__statsFrame, text="-", command=self.decreaseButtonClick)
         self.__componentDownButton.grid(row=3, column=0, sticky="WNS")
 
+    def gridClick(self, rowNum, colNum):
+        self.clearDataPoints()
+        self.solveCircuit()
+        self.wipeSelectedCellColour()
+        if self.__selectedTool == "select":
+            self.__selectedComponent = self.__circuitGridClass.getObject(rowNum, colNum)
+            self.__buttonMatrix[rowNum][colNum].config(bg="light grey")  # makes it easy to see what is selected
+            self.updateStatsSelectedComponent()  # if select tool is chosen stats of selected component is displayed
+            self.updateComponentEditor()
+        elif self.__selectedTool == "plot":
+            self.__selectedGraphPlotComponent = self.__circuitGridClass.getObject(rowNum, colNum)
+            self.__buttonMatrix[rowNum][colNum].config(bg="grey")
+            self.updateDataLists()
+            self.plotGraphs()
+        else:  # otherwise grid is updated with selected component
+            if self.__selectedTool is None:  # only for if the clever tool is selected
+                self.__buttonMatrix[rowNum][colNum].config(text="")
+                self.__circuitGridClass.updateGrid(rowNum, colNum, self.__selectedTool)
+            elif self.__selectedTool == chr(176) or self.__selectedTool == "+" or self.__selectedTool == "-":
+                if rowNum % 2 == 0 and colNum % 2 == 0:
+                    # nodes can only be placed in even areas to prevent then from being next to each other
+                    self.__buttonMatrix[rowNum][colNum].config(text=self.__selectedTool)
+                    self.__circuitGridClass.updateGrid(rowNum, colNum, self.__selectedTool)  # updates the grid class
+            elif (rowNum % 2 == 0 and colNum % 2 == 1) or (rowNum % 2 == 1 and colNum % 2 == 0):
+                # edges can only be placed in even areas to prevent then from being next to each other
+                # this makes calculations easier because it is obvious what they are connected to
+                self.__buttonMatrix[rowNum][colNum].config(text=self.__selectedTool)
+                self.__circuitGridClass.updateGrid(rowNum, colNum, self.__selectedTool)
+        self.__circuitGridClass.solve()  # this is called at the end of every button click to make it seam like it is
+        # updating continuously
+
+    def clearDataPoints(self):
+        self.__currentDataPoints = []
+        self.__voltageDataPoints = []
+        self.__timeDataPoints = []
+
+    def updateDataLists(self):
+        if self.__selectedGraphPlotComponent.isEdgy():
+            self.__currentDataPoints.append(self.__selectedGraphPlotComponent.getCurrent())
+            self.__voltageDataPoints.append(self.__selectedGraphPlotComponent.getPotentialDifference())
+            self.__timeDataPoints.append(time.time())
+            print(self.__currentDataPoints,self.__voltageDataPoints,self.__timeDataPoints)  ###
+
+    def plotGraphs(self):
         # graph data setup
         currentVoltageData = {"current": self.__currentDataPoints, "voltage": self.__voltageDataPoints}
         currentVoltageDataFrame = pd.DataFrame(currentVoltageData)
@@ -150,32 +199,7 @@ class Window:
         VTGraph.set_xlabel("time")
         VTGraph.set_ylabel("voltage")
 
-    def gridClick(self, rowNum, colNum):
-        self.solveCircuit()
-        self.wipeSelectedCellColour()
-        if self.__selectedTool == "select":
-            self.__selectedComponent = self.__circuitGridClass.getObject(rowNum, colNum)
-            self.__buttonMatrix[rowNum][colNum].config(bg="light grey")  # makes it easy to see what is selected
-            self.updateStats()  # if select tool is chosen stats of selected component is displayed
-            self.updateComponentEditor()
-        else:  # otherwise grid is updated with selected component
-            if self.__selectedTool is None:  # only for if the clever tool is selected
-                self.__buttonMatrix[rowNum][colNum].config(text="")
-                self.__circuitGridClass.updateGrid(rowNum, colNum, self.__selectedTool)
-            elif self.__selectedTool == chr(176) or self.__selectedTool == "+" or self.__selectedTool == "-":
-                if rowNum % 2 == 0 and colNum % 2 == 0:
-                    # nodes can only be placed in even areas to prevent then from being next to each other
-                    self.__buttonMatrix[rowNum][colNum].config(text=self.__selectedTool)
-                    self.__circuitGridClass.updateGrid(rowNum, colNum, self.__selectedTool)  # updates the grid class
-            elif (rowNum % 2 == 0 and colNum % 2 == 1) or (rowNum % 2 == 1 and colNum % 2 == 0):
-                # edges can only be placed in even areas to prevent then from being next to each other
-                # this makes calculations easier because it is obvious what they are connected to
-                self.__buttonMatrix[rowNum][colNum].config(text=self.__selectedTool)
-                self.__circuitGridClass.updateGrid(rowNum, colNum, self.__selectedTool)
-        self.__circuitGridClass.solve()  # this is called at the end of every button click to make it seam like it is
-        # updating continuously
-
-    def updateStats(self):
+    def updateStatsSelectedComponent(self):
         try:
             if not self.__selectedComponent.isEdgy():
                 potential = round(self.__selectedComponent.getPotential(), 3)
@@ -184,6 +208,19 @@ class Window:
                 potentialDifference = round(self.__selectedComponent.getPotentialDifference(), 3)
                 current = round(self.__selectedComponent.getCurrent(), 3)
                 resistance = round(self.__selectedComponent.getResistance(), 3)
+                self.__currentStats.config(text=f"Res: {resistance} \np.d: {potentialDifference} \nCur: {current} ")
+        except:
+            self.__currentStats.config(text="no component \n selected")
+
+    def updateStatsPlotSelectedComponent(self):  ###
+        try:
+            if not self.__selectedGraphPlotComponent.isEdgy():
+                potential = round(self.__selectedGraphPlotComponent.getPotential(), 3)
+                self.__currentStats.config(text=f"Potential: {potential}")
+            else:
+                potentialDifference = round(self.__selectedGraphPlotComponent.getPotentialDifference(), 3)
+                current = round(self.__selectedGraphPlotComponent.getCurrent(), 3)
+                resistance = round(self.__selectedGraphPlotComponent.getResistance(), 3)
                 self.__currentStats.config(text=f"Res: {resistance} \np.d: {potentialDifference} \nCur: {current} ")
         except:
             self.__currentStats.config(text="no component \n selected")
@@ -211,6 +248,10 @@ class Window:
     # setting tool based on button clicked
     def selectButtonClick(self):
         self.__selectedTool = "select"
+        self.__circuitGridClass.solve()
+
+    def plotSelectButtonClick(self):
+        self.__selectedTool = "plot"
         self.__circuitGridClass.solve()
 
     def clearButtonClick(self):
@@ -247,7 +288,9 @@ class Window:
                 self.increasePotential()
                 self.__componentEditStatNum.config(text=str(self.__selectedComponent.getPotential()))
             self.solveCircuit()
-            self.updateStats()
+            self.updateStatsSelectedComponent()
+            self.updateDataLists()
+            self.plotGraphs()
         except:
             pass
 
@@ -260,8 +303,9 @@ class Window:
                 self.decreasePotential()
                 self.__componentEditStatNum.config(text=str(self.__selectedComponent.getPotential()))
             self.solveCircuit()
-            self.updateStats()
-
+            self.updateStatsSelectedComponent()
+            self.updateDataLists()
+            self.plotGraphs()
         except:
             pass
 
@@ -286,43 +330,6 @@ class Window:
     # runs window
     def run(self):
         self.__window.mainloop()
-
-
-class Grid:
-    def __init__(self, rows, cols):
-        self.__grid = []
-        for row in range(rows):
-            self.row = []
-            for col in range(cols):
-                self.row.append(None)
-            self.__grid.append(self.row)
-        self.__circuitClass = None
-        self.__numRows = rows
-        self.__numCols = cols
-
-    def updateGrid(self, row, col, selectedTool):
-        if selectedTool is None:
-            self.__grid[row][col] = None
-        if selectedTool == "+":
-            self.__grid[row][col] = Source()
-        if selectedTool == "-":
-            self.__grid[row][col] = Ground()
-        if selectedTool == chr(126):
-            self.__grid[row][col] = Conductor()
-        if selectedTool == chr(174):
-            self.__grid[row][col] = Resistor()
-        if selectedTool == chr(176):
-            self.__grid[row][col] = Join()
-
-    def getObject(self, row, col):
-        if self.__grid[row][col] is not None:
-            return self.__grid[row][col]
-        else:
-            return None
-
-    def solve(self):  # solves for the potential of each "node"
-        self.__circuitClass = CircuitGraph(self.__grid)
-        self.__circuitClass.solveGraph()
 
 
 numberOfGridRows = 15

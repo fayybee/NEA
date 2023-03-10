@@ -1,5 +1,3 @@
-from ComponantClasses import *
-
 minimumVoltageChange = 0.00001
 
 

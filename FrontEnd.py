@@ -1,7 +1,8 @@
 import tkinter as tk
 
-import pandas as pd
 import time
+
+import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 
@@ -15,7 +16,7 @@ class Window:
         self.__gridNumberOfColumns = cols
         self.__gridWidth = 500
         self.__gridHeight = 500
-        self.__toolBarWidth = 100
+        self.__toolBarWidth = 150
         self.__graphFrameWidth = 250
 
         # stats variables
@@ -41,8 +42,8 @@ class Window:
         # frame initialising
         self.__toolBarFrame = tk.Frame(self.__window, relief=tk.GROOVE, borderwidth=5)
         self.__toolBarFrame.grid(row=0, column=0, sticky="NEWS")
-        self.__statsFrame = tk.Frame(self.__window, relief=tk.GROOVE, borderwidth=5)
-        self.__statsFrame.grid(row=1, column=0, sticky="NEWS")
+        self.__dataFrame = tk.Frame(self.__window, relief=tk.GROOVE, borderwidth=5)
+        self.__dataFrame.grid(row=1, column=0, sticky="NEWS")
         self.__gridFrame = tk.Frame(self.__window, relief=tk.GROOVE, borderwidth=5)
         self.__gridFrame.grid(row=0, rowspan=2, column=1, sticky="NEWS")
         self.__graphFrame = tk.Frame(self.__window, relief=tk.GROOVE, borderwidth=5)
@@ -50,7 +51,7 @@ class Window:
 
         # frame configuration
         self.__toolBarFrame.columnconfigure(0, minsize=self.__toolBarWidth)
-        self.__statsFrame.columnconfigure(0, minsize=self.__toolBarWidth)
+        self.__dataFrame.columnconfigure(0, minsize=self.__toolBarWidth)
         self.__graphFrame.rowconfigure([0, 1, 2], minsize=(self.__gridHeight / 3) - 2)
 
         for i in range(self.__gridNumberOfRows):
@@ -61,14 +62,22 @@ class Window:
         # frame labels
         self.__toolbarLabel = tk.Label(self.__toolBarFrame, text="TOOL BAR")
         self.__toolbarLabel.grid(row=0, sticky="N")
-        self.__statsLabel = tk.Label(self.__statsFrame, text="STATISTICS")
-        self.__statsLabel.grid(row=0, sticky="N")
-        self.__currentStats = tk.Label(self.__statsFrame, text="no component \n selected")
-        self.__currentStats.grid(row=1, sticky="EW")
-        self.__componentEditLabel = tk.Label(self.__statsFrame, text="")
-        self.__componentEditLabel.grid(row=2, sticky="NEWS")
-        self.__componentEditStatNum = tk.Label(self.__statsFrame, text="0")
-        self.__componentEditStatNum.grid(row=3, column=0, sticky="NS")
+        self.__dataLabel = tk.Label(self.__dataFrame, text="COMPONENT DATA")
+        self.__dataLabel.grid(row=0, sticky="N")
+        self.__selectedComponentLabel = tk.Label(self.__dataFrame, text="Selected Component Data:")
+        self.__selectedComponentLabel.grid(row=1,sticky="NEWS")
+        self.__selectedComponentDataLabel = tk.Label(self.__dataFrame, text="no component \n selected")
+        self.__selectedComponentDataLabel.grid(row=2, sticky="EW")
+        self.__componentEditLabel = tk.Label(self.__dataFrame, text="")
+        self.__componentEditLabel.grid(row=3, sticky="NEWS")
+        self.__componentEditStatNumLabel = tk.Label(self.__dataFrame, text="0")
+        self.__componentEditStatNumLabel.grid(row=4, column=0, sticky="NS")
+        self.__separatingLineLabel = tk.Label(self.__dataFrame, text="--------")
+        self.__separatingLineLabel.grid(row=5, sticky="NEWS")
+        self.__graphComponentLabel = tk.Label(self.__dataFrame, text="Graph Component Data:")
+        self.__graphComponentLabel.grid(row=6, sticky="NEWS")
+        self.__graphComponentDataLabel = tk.Label(self.__dataFrame,text="no component \n selected")
+        self.__graphComponentDataLabel.grid(row=7,sticky="NEWS")
 
         # creating grid buttons
         self.__buttonMatrix = []
@@ -93,31 +102,34 @@ class Window:
             self.__buttonMatrix.append(self.__buttonRow)
 
         # creating tool buttons
-        self.__buttonSelect = tk.Button(self.__toolBarFrame, text="select", command=self.selectButtonClick)
+        self.__buttonSelect = tk.Button(self.__toolBarFrame, text="select variable component", command=self.selectButtonClick)
         self.__buttonSelect.grid(row=1, sticky="NEWS")
+        self.__buttonSelectGraphPlotComponent = tk.Button(self.__toolBarFrame, text="select graph component",
+                                                          command=self.plotSelectButtonClick)
+        self.__buttonSelectGraphPlotComponent.grid(row=2, sticky="NEWS")
         self.__buttonClear = tk.Button(self.__toolBarFrame, text="clear", command=self.clearButtonClick)
-        self.__buttonClear.grid(row=2, sticky="NEWS")
+        self.__buttonClear.grid(row=3, sticky="NEWS")
         self.__buttonJoin = tk.Button(self.__toolBarFrame, text=chr(176), command=self.joinButtonClick)
-        self.__buttonJoin.grid(row=3, sticky="NEWS")
+        self.__buttonJoin.grid(row=4, sticky="NEWS")
         self.__buttonSource = tk.Button(self.__toolBarFrame, text="+", command=self.sourceButtonClick)
-        self.__buttonSource.grid(row=4, sticky="NEWS")
+        self.__buttonSource.grid(row=5, sticky="NEWS")
         self.__buttonGround = tk.Button(self.__toolBarFrame, text="-", command=self.groundButtonClick)
-        self.__buttonGround.grid(row=5, sticky="NEWS")
+        self.__buttonGround.grid(row=6, sticky="NEWS")
         self.__buttonWire = tk.Button(self.__toolBarFrame, text=chr(126), command=self.wireButtonClick)
-        self.__buttonWire.grid(row=6, sticky="NEWS")
+        self.__buttonWire.grid(row=7, sticky="NEWS")
         self.__buttonResistor = tk.Button(self.__toolBarFrame, text=chr(174), command=self.resistorButtonClick)
-        self.__buttonResistor.grid(row=7, sticky="NEWS")
-        self.__buttonSelectGraphPlotComponent = tk.Button(self.__toolBarFrame, text="plot this", command=self.plotSelectButtonClick)
-        self.__buttonSelectGraphPlotComponent.grid(row=8, sticky="NEWS")
+        self.__buttonResistor.grid(row=8, sticky="NEWS")
 
         # creating stats button
-        self.__componentUpButton = tk.Button(self.__statsFrame, text="+", command=self.increaseButtonClick)
-        self.__componentUpButton.grid(row=3, column=0, sticky="NES")
-        self.__componentDownButton = tk.Button(self.__statsFrame, text="-", command=self.decreaseButtonClick)
-        self.__componentDownButton.grid(row=3, column=0, sticky="WNS")
+        self.__componentUpButton = tk.Button(self.__dataFrame, text="+", command=self.increaseButtonClick)
+        self.__componentUpButton.grid(row=4, column=0, sticky="NES")
+        self.__componentDownButton = tk.Button(self.__dataFrame, text="-", command=self.decreaseButtonClick)
+        self.__componentDownButton.grid(row=4, column=0, sticky="WNS")
+
+        # show graphs
+        self.plotGraphs()
 
     def gridClick(self, rowNum, colNum):
-        self.clearDataPoints()
         self.solveCircuit()
         self.wipeSelectedCellColour()
         if self.__selectedTool == "select":
@@ -126,8 +138,10 @@ class Window:
             self.updateStatsSelectedComponent()  # if select tool is chosen stats of selected component is displayed
             self.updateComponentEditor()
         elif self.__selectedTool == "plot":
+            self.clearDataPoints()
             self.__selectedGraphPlotComponent = self.__circuitGridClass.getObject(rowNum, colNum)
             self.__buttonMatrix[rowNum][colNum].config(bg="grey")
+            self.updateGraphComponentDataLabel()
             self.updateDataLists()
             self.plotGraphs()
         else:  # otherwise grid is updated with selected component
@@ -153,92 +167,92 @@ class Window:
         self.__timeDataPoints = []
 
     def updateDataLists(self):
-        if self.__selectedGraphPlotComponent.isEdgy():
+        if self.__selectedGraphPlotComponent is not None:
             self.__currentDataPoints.append(self.__selectedGraphPlotComponent.getCurrent())
             self.__voltageDataPoints.append(self.__selectedGraphPlotComponent.getPotentialDifference())
             self.__timeDataPoints.append(time.time())
-            print(self.__currentDataPoints,self.__voltageDataPoints,self.__timeDataPoints)  ###
+        else:
+            self.clearDataPoints()
 
     def plotGraphs(self):
-        # graph data setup
-        currentVoltageData = {"current": self.__currentDataPoints, "voltage": self.__voltageDataPoints}
-        currentVoltageDataFrame = pd.DataFrame(currentVoltageData)
-        currentTimeData = {"current": self.__currentDataPoints, "time": self.__timeDataPoints}
-        currentTimeDataFrame = pd.DataFrame(currentTimeData)
-        voltageTimeData = {"voltage": self.__voltageDataPoints, "time": self.__timeDataPoints}
-        voltageTimeDataFrame = pd.DataFrame(voltageTimeData)
+        fontDict = {'fontsize': 8}
 
-        # graph setup
-        IVFigure = Figure(figsize=(3, 1), dpi=100)
-        IVGraph = IVFigure.add_subplot(111)
-        IVGraphType = FigureCanvasTkAgg(IVFigure, self.__graphFrame)
-        IVGraphType.get_tk_widget().grid(row=0, sticky="NEWS")
-        currentVoltageDataFrame = currentVoltageDataFrame[["current", "voltage"]].groupby("voltage").sum()
-        currentVoltageDataFrame.plot(kind="line", legend=False, ax=IVGraph, color="r", marker=".", fontsize=5)
-        IVGraph.set_title("IV graph", fontsize=7)
-        IVGraph.set_xlabel("voltage")
-        IVGraph.set_ylabel("current")
+        IVFig = Figure(figsize=(3, 1), dpi=100)
+        IVax = IVFig.add_subplot()
+        IVax.set_title("Current Voltage", fontdict=fontDict)
+        IVax.set_xlabel("Current", fontdict=fontDict)
+        IVax.tick_params(labelsize=6)
+        IVax.plot(self.__voltageDataPoints, self.__currentDataPoints, linewidth=1, markersize=6)
+        IVax.set_xlabel("current[A]")
+        IVax.set_ylabel("voltage[V]")
+        IVCanvas= FigureCanvasTkAgg(IVFig, master=self.__graphFrame)
+        IVCanvas.draw()
+        IVCanvas.get_tk_widget().grid(row=0, sticky="NEWS")
 
-        ITFigure = Figure(figsize=(3, 1), dpi=100)
-        ITGraph = ITFigure.add_subplot(111)
-        ITGraphType = FigureCanvasTkAgg(ITFigure, self.__graphFrame)
-        ITGraphType.get_tk_widget().grid(row=1, sticky="NEWS")
-        currentTimeDataFrame = currentTimeDataFrame[["current", "time"]].groupby("time").sum()
-        currentTimeDataFrame.plot(kind="line", legend=False, ax=ITGraph, color="r", marker=".", fontsize=5)
-        ITGraph.set_title("It graph", fontsize=7)
-        ITGraph.set_xlabel("time")
-        ITGraph.set_ylabel("current")
+        ItFig = Figure(figsize=(3, 1), dpi=100)
+        Itax = ItFig.add_subplot()
+        Itax.set_title("Current time", fontdict=fontDict)
+        Itax.set_xlabel("Current", fontdict=fontDict)
+        Itax.tick_params(labelsize=6)
+        Itax.plot(self.__timeDataPoints, self.__currentDataPoints, linewidth=1, markersize=6)
+        Itax.set_xlabel("current[A]")
+        Itax.set_ylabel("time[t]")
+        ItCanvas = FigureCanvasTkAgg(ItFig, master=self.__graphFrame)
+        ItCanvas.draw()
+        ItCanvas.get_tk_widget().grid(row=1, sticky="NEWS")
 
-        VTFigure = Figure(figsize=(3, 1), dpi=100)
-        VTGraph = VTFigure.add_subplot(111)
-        VTGraphType = FigureCanvasTkAgg(VTFigure, self.__graphFrame)
-        VTGraphType.get_tk_widget().grid(row=2, sticky="NEWS")
-        voltageTimeDataFrame = voltageTimeDataFrame[["voltage", "time"]].groupby("time").sum()
-        voltageTimeDataFrame.plot(kind="line", legend=False, ax=VTGraph, color="r", marker=".", fontsize=5)
-        VTGraph.set_title("Vt graph", fontsize=7)
-        VTGraph.set_xlabel("time")
-        VTGraph.set_ylabel("voltage")
+        VtFig = Figure(figsize=(3, 1), dpi=100)
+        Vtax = VtFig.add_subplot()
+        Vtax.set_title("Current time", fontdict=fontDict)
+        Vtax.set_xlabel("Current", fontdict=fontDict)
+        Vtax.tick_params(labelsize=6)
+        Vtax.plot(self.__timeDataPoints, self.__voltageDataPoints, linewidth=1, markersize=6)
+        Vtax.set_xlabel("current[A]")
+        Vtax.set_ylabel("time[t]")
+        VtCanvas = FigureCanvasTkAgg(VtFig, master=self.__graphFrame)
+        VtCanvas.draw()
+        VtCanvas.get_tk_widget().grid(row=2, sticky="NEWS")
 
     def updateStatsSelectedComponent(self):
         try:
             if not self.__selectedComponent.isEdgy():
-                potential = round(self.__selectedComponent.getPotential(), 3)
-                self.__currentStats.config(text=f"Potential: {potential}")
+                potential = self.__selectedComponent.getPotential()
+                self.__selectedComponentDataLabel.config(text=f"Potential: {potential}")
             else:
-                potentialDifference = round(self.__selectedComponent.getPotentialDifference(), 3)
-                current = round(self.__selectedComponent.getCurrent(), 3)
-                resistance = round(self.__selectedComponent.getResistance(), 3)
-                self.__currentStats.config(text=f"Res: {resistance} \np.d: {potentialDifference} \nCur: {current} ")
+                potentialDifference = self.__selectedComponent.getPotentialDifference()
+                current = self.__selectedComponent.getCurrent()
+                resistance = self.__selectedComponent.getResistance()
+                self.__selectedComponentDataLabel.config(text=f"Res: {resistance} \np.d: {potentialDifference} \nCur: {current} ")
         except:
-            self.__currentStats.config(text="no component \n selected")
+            self.__selectedComponentDataLabel.config(text="no component \n selected")
 
-    def updateStatsPlotSelectedComponent(self):  ###
+    def updateGraphComponentDataLabel(self):
         try:
             if not self.__selectedGraphPlotComponent.isEdgy():
-                potential = round(self.__selectedGraphPlotComponent.getPotential(), 3)
-                self.__currentStats.config(text=f"Potential: {potential}")
+                potential = self.__selectedGraphPlotComponent.getPotential()
+                self.__graphComponentDataLabel.config(text=f"Potential: {potential}")
             else:
-                potentialDifference = round(self.__selectedGraphPlotComponent.getPotentialDifference(), 3)
-                current = round(self.__selectedGraphPlotComponent.getCurrent(), 3)
-                resistance = round(self.__selectedGraphPlotComponent.getResistance(), 3)
-                self.__currentStats.config(text=f"Res: {resistance} \np.d: {potentialDifference} \nCur: {current} ")
+                potentialDifference = self.__selectedGraphPlotComponent.getPotentialDifference()
+                current = self.__selectedGraphPlotComponent.getCurrent()
+                resistance = self.__selectedGraphPlotComponent.getResistance()
+                self.__graphComponentDataLabel.config(text=f"Res: {resistance} \np.d: {potentialDifference} \nCur: {current} ")
         except:
-            self.__currentStats.config(text="no component \n selected")
+            self.__graphComponentDataLabel.config(text="no component \n selected")
 
     def updateComponentEditor(self):
         try:
             if self.__selectedComponent.isEdgy() and not self.__selectedComponent.isWire():
                 self.__componentEditLabel.config(text="Resistance")
-                self.__componentEditStatNum.config(text=str(round(self.__selectedComponent.getResistance(), 3)))
+                self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getResistance(), 3))
             elif self.__selectedComponent.isWire():
                 self.__componentEditLabel.config(text="")
-                self.__componentEditStatNum.config(text="0.0")
+                self.__componentEditStatNumLabel.config(text="0.0")
             elif not self.__selectedComponent.isEdgy():
                 self.__componentEditLabel.config(text="Potential")
-                self.__componentEditStatNum.config(text=str(round(self.__selectedComponent.getPotential(), 3)))
+                self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getPotential(), 3))
         except:
             self.__componentEditLabel.config(text="")
-            self.__componentEditStatNum.config(text="-")
+            self.__componentEditStatNumLabel.config(text="-")
 
     def wipeSelectedCellColour(self):  # prevents everything from looking selected so new selection is easy to see
         for i in range(len(self.__buttonMatrix)):
@@ -283,10 +297,10 @@ class Window:
         try:
             if self.__selectedComponent.isEdgy() and not self.__selectedComponent.isWire():
                 self.increaseResistance()
-                self.__componentEditStatNum.config(text=str(self.__selectedComponent.getResistance()))
+                self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getResistance()))
             elif self.__selectedComponent.isSource():
                 self.increasePotential()
-                self.__componentEditStatNum.config(text=str(self.__selectedComponent.getPotential()))
+                self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getPotential()))
             self.solveCircuit()
             self.updateStatsSelectedComponent()
             self.updateDataLists()
@@ -298,10 +312,10 @@ class Window:
         try:
             if self.__selectedComponent.isEdgy() and not self.__selectedComponent.isWire():
                 self.decreaseResistance()
-                self.__componentEditStatNum.config(text=str(self.__selectedComponent.getResistance()))
+                self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getResistance()))
             elif self.__selectedComponent.isSource():
                 self.decreasePotential()
-                self.__componentEditStatNum.config(text=str(self.__selectedComponent.getPotential()))
+                self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getPotential()))
             self.solveCircuit()
             self.updateStatsSelectedComponent()
             self.updateDataLists()

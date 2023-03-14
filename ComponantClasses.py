@@ -1,4 +1,4 @@
-class Component:
+class Component:  # overarching class, all objects are children of this class
     def __init__(self, isVariable=True, isEdgy=False, isWire=False):
         self._isVariable = isVariable
         self.__edgy = isEdgy
@@ -28,7 +28,7 @@ class Join(Component):
         self.__potential = newVoltage
 
     def getPotential(self):
-        return self.__potential
+        return round(self.__potential,5)
 
     def assignNode(self, node):
         self.__node = node
@@ -54,32 +54,44 @@ class Ground(Join):
 
 
 class Conductor(Component):
-    def __init__(self, resistance=0.000001, isVariable=False, isWire=True):
+    def __init__(self, resistance=0.00014, isVariable=True, isWire=True):
+        # resistance default is typical of a 10cm 3mm diameter piece of copper wire
         super().__init__(isVariable, True, isWire)
         self.__current = 0.0
         self.__potentialDiff = 0.0
+        self.__referenceResistance = resistance  # original resistance of an un adjusted component
+        self.__referenceResistanceProportion = 1  # the amount the component has been changed by (proportion)
         self.__resistance = resistance
 
     def updateCurrent(self, newC):
         self.__current = newC
 
     def getCurrent(self):
-        return self.__current
+        return round(self.__current, 5)
 
     def getPotentialDifference(self):
-        return self.__potentialDiff
+        return round(self.__potentialDiff, 5)
 
     def updatePotentialDifference(self, newV):
         self.__potentialDiff = newV
 
+    def getResistanceProportion(self):
+        return round(self.__referenceResistanceProportion, 1)
+
     def getResistance(self):
-        return self.__resistance
+        return round(self.__resistance, 5)
 
     def setResistance(self, newR):
         if self._isVariable:
-            self.__resistance = newR
+            self.__referenceResistanceProportion = newR
+            self.__resistance = self.__referenceResistance * newR
+            # uses proportions to find resistance rather then just setting it to a value
+            # this allows for resistance of a wire to be quickly changed without having to make a new class
+            # this would result in the function "setResistance" being overwritten to include the equation
+            # pL/A = R
+            # where p is resistivity of the wire L is length A is area and R is resistance
 
 
 class Resistor(Conductor):
     def __init__(self):
-        super().__init__(5, True, False)
+        super().__init__(1, True, False)

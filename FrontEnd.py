@@ -1,8 +1,5 @@
-import tkinter as tk
-
 import time
 
-import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 
@@ -17,7 +14,7 @@ class FrontEndWindow:
         self.__gridNumberOfColumns = cols
         self.__gridWidth = 500
         self.__gridHeight = 500
-        self.__toolBarWidth = 150
+        self.__toolBarWidth = 170
         self.__graphFrameWidth = 250
 
         # stats variables
@@ -135,7 +132,7 @@ class FrontEndWindow:
         self.__componentDownButton.grid(row=4, column=0, sticky="WNS")
 
         # creating menu button
-        self.__helpButton = tk.Button(self.__menuBarFrame, text="HELP" , command=self.openHelpWindow)
+        self.__helpButton = tk.Button(self.__menuBarFrame, text="HELP", command=self.openHelpWindow)
         self.__helpButton.grid(sticky="NWS")
 
         # show graphs
@@ -153,7 +150,7 @@ class FrontEndWindow:
                 self.__graphSelectedCell.config(bg="grey")  # so we can still see the component which is being plotted
             self.__selectedComponent = self.__circuitGridClass.getObject(rowNum, colNum)
             self.__buttonMatrix[rowNum][colNum].config(bg="light grey")  # makes it easy to see what is selected
-            self.updateStatsSelectedComponentLabel()  # if select tool is chosen stats of selected component is
+            self.updateDataSelectedComponentText()  # if select tool is chosen stats of selected component is
             # displayed
             self.updateComponentEditor()
         elif self.__selectedTool == "plot":
@@ -162,7 +159,7 @@ class FrontEndWindow:
             if self.__selectedGraphPlotComponent.isEdgy():
                 self.__buttonMatrix[rowNum][colNum].config(bg="grey")
                 self.__graphSelectedCell = self.__buttonMatrix[rowNum][colNum]
-                self.updateGraphComponentDataLabel()
+                self.updateDataGraphComponentText()
                 self.updateDataLists()
                 self.plotGraphs()
         else:  # otherwise grid is updated with selected component
@@ -233,7 +230,7 @@ class FrontEndWindow:
         VtCanvas.draw()
         VtCanvas.get_tk_widget().grid(row=2, sticky="NEWS")
 
-    def updateStatsSelectedComponentLabel(self):
+    def updateDataSelectedComponentText(self):
         try:
             if not self.__selectedComponent.isEdgy():
                 potential = self.__selectedComponent.getPotential()
@@ -247,7 +244,7 @@ class FrontEndWindow:
         except:
             self.__selectedComponentDataLabel.config(text="no component \n selected")
 
-    def updateGraphComponentDataLabel(self):
+    def updateDataGraphComponentText(self):
         try:
             if not self.__selectedGraphPlotComponent.isEdgy():
                 potential = self.__selectedGraphPlotComponent.getPotential()
@@ -262,16 +259,19 @@ class FrontEndWindow:
             self.__graphComponentDataLabel.config(text="no component \n selected")
 
     def updateComponentEditor(self):
+        # updates the name of what is being adjusted ( resistance for a resistor etc)
+        # and changes the number in increase/ decrease section
         try:
-            if self.__selectedComponent.isEdgy() and not self.__selectedComponent.isWire():
-                self.__componentEditLabel.config(text="Resistance")
-                self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getResistance(), 3))
-            elif self.__selectedComponent.isWire():
-                self.__componentEditLabel.config(text="")
-                self.__componentEditStatNumLabel.config(text="0.0")
+            if self.__selectedComponent.isEdgy():
+                if self.__selectedComponent.isWire():
+                    self.__componentEditLabel.config(text="Resistivity (ohm metres/10^-8)")
+                    self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getResistanceProportion()))
+                else:
+                    self.__componentEditLabel.config(text="Resistance (ohms)")
+                    self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getResistance()))
             elif not self.__selectedComponent.isEdgy():
                 self.__componentEditLabel.config(text="Potential")
-                self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getPotential(), 3))
+                self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getPotential()))
         except:
             self.__componentEditLabel.config(text="")
             self.__componentEditStatNumLabel.config(text="-")
@@ -320,12 +320,15 @@ class FrontEndWindow:
             if self.__selectedComponent.isEdgy() and not self.__selectedComponent.isWire():
                 self.increaseResistance()
                 self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getResistance()))
+            elif self.__selectedComponent.isWire():
+                self.increaseResistivity()
+                self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getResistanceProportion()))
             elif self.__selectedComponent.isSource():
                 self.increasePotential()
                 self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getPotential()))
             self.solveCircuit()
-            self.updateStatsSelectedComponentLabel()
-            self.updateGraphComponentDataLabel()
+            self.updateDataSelectedComponentText()
+            self.updateDataGraphComponentText()
             self.updateDataLists()
             self.plotGraphs()
         except:
@@ -336,12 +339,15 @@ class FrontEndWindow:
             if self.__selectedComponent.isEdgy() and not self.__selectedComponent.isWire():
                 self.decreaseResistance()
                 self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getResistance()))
+            elif self.__selectedComponent.isWire():
+                self.decreaseResistivity()
+                self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getResistanceProportion()))
             elif self.__selectedComponent.isSource():
                 self.decreasePotential()
                 self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getPotential()))
             self.solveCircuit()
-            self.updateStatsSelectedComponentLabel()
-            self.updateGraphComponentDataLabel()
+            self.updateDataSelectedComponentText()
+            self.updateDataGraphComponentText()
             self.updateDataLists()
             self.plotGraphs()
         except:
@@ -350,9 +356,16 @@ class FrontEndWindow:
     def increaseResistance(self):
         self.__selectedComponent.setResistance(self.__selectedComponent.getResistance() + 1)
 
+    def increaseResistivity(self):
+        self.__selectedComponent.setResistance(self.__selectedComponent.getResistanceProportion() + 0.1)
+
     def decreaseResistance(self):
         if self.__selectedComponent.getResistance() > 1:
             self.__selectedComponent.setResistance(self.__selectedComponent.getResistance() - 1)
+
+    def decreaseResistivity(self):
+        if self.__selectedComponent.getResistanceProportion() > 0.1:
+            self.__selectedComponent.setResistance(self.__selectedComponent.getResistanceProportion() - 0.1)
 
     def increasePotential(self):
         self.__selectedComponent.updatePotential(self.__selectedComponent.getPotential() + 1)

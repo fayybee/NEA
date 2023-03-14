@@ -88,12 +88,12 @@ class CircuitGraph:
         for key, node in self.__listNodes.items():
             row, col = key[0], key[1]
             component = self.__circuitGrid[row][col]
-            component.updatePotential(round(node.getVoltage(), 3))
+            component.updatePotential(node.getVoltage())
         for key, edge in self.__listEdges.items():
             row, col = key[0], key[1]
             component = self.__circuitGrid[row][col]
-            component.updatePotentialDifference(round(abs(edge.getPD()), 3))
-            component.updateCurrent(round(abs(edge.getPD() / float(edge.getResistance())), 3))
+            component.updatePotentialDifference(abs(edge.getPD()))
+            component.updateCurrent(abs(edge.getPD() / float(edge.getResistance())))
 
     def cleanAll(self):
         self.__listNodes.clear()

@@ -7,9 +7,10 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 
 from GridClass import *
+from HelpWindow import *
 
 
-class Window:
+class FrontEndWindow:
     def __init__(self, rows, cols):
         # grid constants
         self.__gridNumberOfRows = rows
@@ -32,22 +33,28 @@ class Window:
         self.__selectedComponent = None
         self.__selectedTool = None
 
+        # cell colouring
+        self.__graphSelectedCell = None
+
         # window configuration
         self.__window = tk.Tk()
-        self.__window.rowconfigure([0, 1], minsize=self.__gridHeight / 2)
+        self.__window.rowconfigure(0, minsize=35)
+        self.__window.rowconfigure([1, 2], minsize=self.__gridHeight / 2)
         self.__window.columnconfigure(0, minsize=self.__toolBarWidth)
         self.__window.columnconfigure(1, minsize=self.__gridWidth)
         self.__window.columnconfigure(2, minsize=self.__graphFrameWidth)
 
         # frame initialising
+        self.__menuBarFrame = tk.Frame(self.__window, relief=tk.GROOVE, borderwidth=5)
+        self.__menuBarFrame.grid(row=0, column=0, columnspan=3, sticky="NEWS")
         self.__toolBarFrame = tk.Frame(self.__window, relief=tk.GROOVE, borderwidth=5)
-        self.__toolBarFrame.grid(row=0, column=0, sticky="NEWS")
+        self.__toolBarFrame.grid(row=1, column=0, sticky="NEWS")
         self.__dataFrame = tk.Frame(self.__window, relief=tk.GROOVE, borderwidth=5)
-        self.__dataFrame.grid(row=1, column=0, sticky="NEWS")
+        self.__dataFrame.grid(row=2, column=0, sticky="NEWS")
         self.__gridFrame = tk.Frame(self.__window, relief=tk.GROOVE, borderwidth=5)
-        self.__gridFrame.grid(row=0, rowspan=2, column=1, sticky="NEWS")
+        self.__gridFrame.grid(row=1, rowspan=2, column=1, sticky="NEWS")
         self.__graphFrame = tk.Frame(self.__window, relief=tk.GROOVE, borderwidth=5)
-        self.__graphFrame.grid(row=0, rowspan=2, column=2, sticky="NEWS")
+        self.__graphFrame.grid(row=1, rowspan=2, column=2, sticky="NEWS")
 
         # frame configuration
         self.__toolBarFrame.columnconfigure(0, minsize=self.__toolBarWidth)
@@ -65,7 +72,7 @@ class Window:
         self.__dataLabel = tk.Label(self.__dataFrame, text="COMPONENT DATA")
         self.__dataLabel.grid(row=0, sticky="N")
         self.__selectedComponentLabel = tk.Label(self.__dataFrame, text="Selected Component Data:")
-        self.__selectedComponentLabel.grid(row=1,sticky="NEWS")
+        self.__selectedComponentLabel.grid(row=1, sticky="NEWS")
         self.__selectedComponentDataLabel = tk.Label(self.__dataFrame, text="no component \n selected")
         self.__selectedComponentDataLabel.grid(row=2, sticky="EW")
         self.__componentEditLabel = tk.Label(self.__dataFrame, text="")
@@ -76,8 +83,8 @@ class Window:
         self.__separatingLineLabel.grid(row=5, sticky="NEWS")
         self.__graphComponentLabel = tk.Label(self.__dataFrame, text="Graph Component Data:")
         self.__graphComponentLabel.grid(row=6, sticky="NEWS")
-        self.__graphComponentDataLabel = tk.Label(self.__dataFrame,text="no component \n selected")
-        self.__graphComponentDataLabel.grid(row=7,sticky="NEWS")
+        self.__graphComponentDataLabel = tk.Label(self.__dataFrame, text="no component \n selected")
+        self.__graphComponentDataLabel.grid(row=7, sticky="NEWS")
 
         # creating grid buttons
         self.__buttonMatrix = []
@@ -102,7 +109,8 @@ class Window:
             self.__buttonMatrix.append(self.__buttonRow)
 
         # creating tool buttons
-        self.__buttonSelect = tk.Button(self.__toolBarFrame, text="select variable component", command=self.selectButtonClick)
+        self.__buttonSelect = tk.Button(self.__toolBarFrame, text="select variable component",
+                                        command=self.selectButtonClick)
         self.__buttonSelect.grid(row=1, sticky="NEWS")
         self.__buttonSelectGraphPlotComponent = tk.Button(self.__toolBarFrame, text="select graph component",
                                                           command=self.plotSelectButtonClick)
@@ -126,25 +134,40 @@ class Window:
         self.__componentDownButton = tk.Button(self.__dataFrame, text="-", command=self.decreaseButtonClick)
         self.__componentDownButton.grid(row=4, column=0, sticky="WNS")
 
+        # creating menu button
+        self.__helpButton = tk.Button(self.__menuBarFrame, text="HELP" , command=self.openHelpWindow)
+        self.__helpButton.grid(sticky="NWS")
+
         # show graphs
         self.plotGraphs()
 
+    def openHelpWindow(self):
+        helpWindow = HelpWindow()
+        helpWindow.run()
+
     def gridClick(self, rowNum, colNum):
         self.solveCircuit()
-        self.wipeSelectedCellColour()
+        self.wipeCellColours()  # resets cell colours so they can be updated to the correct colours
         if self.__selectedTool == "select":
+            if self.__graphSelectedCell is not None:
+                self.__graphSelectedCell.config(bg="grey")  # so we can still see the component which is being plotted
             self.__selectedComponent = self.__circuitGridClass.getObject(rowNum, colNum)
             self.__buttonMatrix[rowNum][colNum].config(bg="light grey")  # makes it easy to see what is selected
-            self.updateStatsSelectedComponent()  # if select tool is chosen stats of selected component is displayed
+            self.updateStatsSelectedComponentLabel()  # if select tool is chosen stats of selected component is
+            # displayed
             self.updateComponentEditor()
         elif self.__selectedTool == "plot":
             self.clearDataPoints()
             self.__selectedGraphPlotComponent = self.__circuitGridClass.getObject(rowNum, colNum)
-            self.__buttonMatrix[rowNum][colNum].config(bg="grey")
-            self.updateGraphComponentDataLabel()
-            self.updateDataLists()
-            self.plotGraphs()
+            if self.__selectedGraphPlotComponent.isEdgy():
+                self.__buttonMatrix[rowNum][colNum].config(bg="grey")
+                self.__graphSelectedCell = self.__buttonMatrix[rowNum][colNum]
+                self.updateGraphComponentDataLabel()
+                self.updateDataLists()
+                self.plotGraphs()
         else:  # otherwise grid is updated with selected component
+            if self.__graphSelectedCell is not None:
+                self.__graphSelectedCell.config(bg="grey")  # so we can still see the component which is being plotted
             if self.__selectedTool is None:  # only for if the clever tool is selected
                 self.__buttonMatrix[rowNum][colNum].config(text="")
                 self.__circuitGridClass.updateGrid(rowNum, colNum, self.__selectedTool)
@@ -167,7 +190,7 @@ class Window:
         self.__timeDataPoints = []
 
     def updateDataLists(self):
-        if self.__selectedGraphPlotComponent is not None:
+        if self.__selectedGraphPlotComponent is not None and self.__selectedGraphPlotComponent.isEdgy():
             self.__currentDataPoints.append(self.__selectedGraphPlotComponent.getCurrent())
             self.__voltageDataPoints.append(self.__selectedGraphPlotComponent.getPotentialDifference())
             self.__timeDataPoints.append(time.time())
@@ -180,19 +203,17 @@ class Window:
         IVFig = Figure(figsize=(3, 1), dpi=100)
         IVax = IVFig.add_subplot()
         IVax.set_title("Current Voltage", fontdict=fontDict)
-        IVax.set_xlabel("Current", fontdict=fontDict)
         IVax.tick_params(labelsize=6)
         IVax.plot(self.__voltageDataPoints, self.__currentDataPoints, linewidth=1, markersize=6)
         IVax.set_xlabel("current[A]")
         IVax.set_ylabel("voltage[V]")
-        IVCanvas= FigureCanvasTkAgg(IVFig, master=self.__graphFrame)
+        IVCanvas = FigureCanvasTkAgg(IVFig, master=self.__graphFrame)
         IVCanvas.draw()
         IVCanvas.get_tk_widget().grid(row=0, sticky="NEWS")
 
         ItFig = Figure(figsize=(3, 1), dpi=100)
         Itax = ItFig.add_subplot()
         Itax.set_title("Current time", fontdict=fontDict)
-        Itax.set_xlabel("Current", fontdict=fontDict)
         Itax.tick_params(labelsize=6)
         Itax.plot(self.__timeDataPoints, self.__currentDataPoints, linewidth=1, markersize=6)
         Itax.set_xlabel("current[A]")
@@ -203,17 +224,16 @@ class Window:
 
         VtFig = Figure(figsize=(3, 1), dpi=100)
         Vtax = VtFig.add_subplot()
-        Vtax.set_title("Current time", fontdict=fontDict)
-        Vtax.set_xlabel("Current", fontdict=fontDict)
+        Vtax.set_title("voltage time", fontdict=fontDict)
         Vtax.tick_params(labelsize=6)
         Vtax.plot(self.__timeDataPoints, self.__voltageDataPoints, linewidth=1, markersize=6)
-        Vtax.set_xlabel("current[A]")
+        Vtax.set_xlabel("voltage[V]")
         Vtax.set_ylabel("time[t]")
         VtCanvas = FigureCanvasTkAgg(VtFig, master=self.__graphFrame)
         VtCanvas.draw()
         VtCanvas.get_tk_widget().grid(row=2, sticky="NEWS")
 
-    def updateStatsSelectedComponent(self):
+    def updateStatsSelectedComponentLabel(self):
         try:
             if not self.__selectedComponent.isEdgy():
                 potential = self.__selectedComponent.getPotential()
@@ -222,7 +242,8 @@ class Window:
                 potentialDifference = self.__selectedComponent.getPotentialDifference()
                 current = self.__selectedComponent.getCurrent()
                 resistance = self.__selectedComponent.getResistance()
-                self.__selectedComponentDataLabel.config(text=f"Res: {resistance} \np.d: {potentialDifference} \nCur: {current} ")
+                self.__selectedComponentDataLabel.config(
+                    text=f"Res: {resistance} \np.d: {potentialDifference} \nCur: {current} ")
         except:
             self.__selectedComponentDataLabel.config(text="no component \n selected")
 
@@ -235,7 +256,8 @@ class Window:
                 potentialDifference = self.__selectedGraphPlotComponent.getPotentialDifference()
                 current = self.__selectedGraphPlotComponent.getCurrent()
                 resistance = self.__selectedGraphPlotComponent.getResistance()
-                self.__graphComponentDataLabel.config(text=f"Res: {resistance} \np.d: {potentialDifference} \nCur: {current} ")
+                self.__graphComponentDataLabel.config(
+                    text=f"Res: {resistance} \np.d: {potentialDifference} \nCur: {current} ")
         except:
             self.__graphComponentDataLabel.config(text="no component \n selected")
 
@@ -254,7 +276,7 @@ class Window:
             self.__componentEditLabel.config(text="")
             self.__componentEditStatNumLabel.config(text="-")
 
-    def wipeSelectedCellColour(self):  # prevents everything from looking selected so new selection is easy to see
+    def wipeCellColours(self):  # prevents everything from looking selected so new selection is easy to see
         for i in range(len(self.__buttonMatrix)):
             for j in range(len(self.__buttonMatrix[i])):
                 self.__buttonMatrix[i][j].config(bg="SystemButtonFace")
@@ -302,7 +324,8 @@ class Window:
                 self.increasePotential()
                 self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getPotential()))
             self.solveCircuit()
-            self.updateStatsSelectedComponent()
+            self.updateStatsSelectedComponentLabel()
+            self.updateGraphComponentDataLabel()
             self.updateDataLists()
             self.plotGraphs()
         except:
@@ -317,7 +340,8 @@ class Window:
                 self.decreasePotential()
                 self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getPotential()))
             self.solveCircuit()
-            self.updateStatsSelectedComponent()
+            self.updateStatsSelectedComponentLabel()
+            self.updateGraphComponentDataLabel()
             self.updateDataLists()
             self.plotGraphs()
         except:
@@ -348,5 +372,5 @@ class Window:
 
 numberOfGridRows = 15
 numberOfGridCols = 15
-MainWindow = Window(numberOfGridRows, numberOfGridCols)
+MainWindow = FrontEndWindow(numberOfGridRows, numberOfGridCols)
 MainWindow.run()

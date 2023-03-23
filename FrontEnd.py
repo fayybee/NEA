@@ -9,13 +9,13 @@ from HelpWindow import *
 
 class FrontEndWindow:
     def __init__(self, rows, cols):
-        # grid constants
+        # window constants
         self.__gridNumberOfRows = rows
         self.__gridNumberOfColumns = cols
         self.__gridWidth = 500
         self.__gridHeight = 500
         self.__toolBarWidth = 170
-        self.__graphFrameWidth = 250
+        self.__graphFrameWidth = 250  # window constants are which to change here
 
         # stats variables
         self.__currentDataPoints = []
@@ -30,7 +30,7 @@ class FrontEndWindow:
         self.__selectedComponent = None
         self.__selectedTool = None
 
-        # cell colouring
+        # cell colouring (use to help identify which component is being plotted)
         self.__graphSelectedCell = None
 
         # window configuration
@@ -53,7 +53,7 @@ class FrontEndWindow:
         self.__graphFrame = tk.Frame(self.__window, relief=tk.GROOVE, borderwidth=5)
         self.__graphFrame.grid(row=1, rowspan=2, column=2, sticky="NEWS")
 
-        # frame configuration
+        # frame configuration (calculated using window constants)
         self.__toolBarFrame.columnconfigure(0, minsize=self.__toolBarWidth)
         self.__dataFrame.columnconfigure(0, minsize=self.__toolBarWidth)
         self.__graphFrame.rowconfigure([0, 1, 2], minsize=(self.__gridHeight / 3) - 2)
@@ -138,7 +138,7 @@ class FrontEndWindow:
         # show graphs
         self.plotGraphs()
 
-    def openHelpWindow(self):
+    def openHelpWindow(self):  # when Help buttion is clicked a new window will open containing instructions on use
         helpWindow = HelpWindow()
         helpWindow.run()
 
@@ -147,30 +147,35 @@ class FrontEndWindow:
         self.wipeCellColours()  # resets cell colours so they can be updated to the correct colours
         if self.__selectedTool == "select":
             if self.__graphSelectedCell is not None:
-                self.__graphSelectedCell.config(bg="grey")  # so we can still see the component which is being plotted
+                self.__graphSelectedCell.config(bg="grey")  # so we can still see the component which is being
+                # plotted after the component to vary has been selected
             self.__selectedComponent = self.__circuitGridClass.getObject(rowNum, colNum)
-            self.__buttonMatrix[rowNum][colNum].config(bg="light grey")  # makes it easy to see what is selected
-            self.updateDataSelectedComponentText()  # if select tool is chosen stats of selected component is
-            # displayed
-            self.updateComponentEditor()
+            self.__buttonMatrix[rowNum][colNum].config(bg="light grey")  # makes it easy to see what is selected by
+            # turning the cell light grey
+            self.updateDataSelectedComponentText()  # stats of selected component are displayed
+            self.updateComponentEditor()  # updates the number in the editor ( up and down arrows allowing the user
+            # to change the values of the component)
         elif self.__selectedTool == "plot":
-            self.clearDataPoints()
+            self.clearDataPoints()  # clears the data prom previous plots
             self.__selectedGraphPlotComponent = self.__circuitGridClass.getObject(rowNum, colNum)
-            if self.__selectedGraphPlotComponent.isEdgy():
-                self.__buttonMatrix[rowNum][colNum].config(bg="grey")
+            if self.__selectedGraphPlotComponent.isEdgy():  # only edge type components can be plotted because node
+                # types don't have a current
+                self.__buttonMatrix[rowNum][colNum].config(bg="grey")  # shows what has been selected
                 self.__graphSelectedCell = self.__buttonMatrix[rowNum][colNum]
                 self.updateDataGraphComponentText()
                 self.updateDataLists()
                 self.plotGraphs()
         else:  # otherwise grid is updated with selected component
             if self.__graphSelectedCell is not None:
-                self.__graphSelectedCell.config(bg="grey")  # so we can still see the component which is being plotted
-            if self.__selectedTool is None:  # only for if the clever tool is selected
+                self.__graphSelectedCell.config(bg="grey")
+                # allows the user to still see which component is being plotted in the graphs
+            if self.__selectedTool is None:  # this means the clear tool is selected
                 self.__buttonMatrix[rowNum][colNum].config(text="")
                 self.__circuitGridClass.updateGrid(rowNum, colNum, self.__selectedTool)
             elif self.__selectedTool == chr(176) or self.__selectedTool == "+" or self.__selectedTool == "-":
+                # if the selected tool is a node type
                 if rowNum % 2 == 0 and colNum % 2 == 0:
-                    # nodes can only be placed in even areas to prevent then from being next to each other
+                    # nodes can only be placed in even rows and columns to prevent then from being next to each other
                     self.__buttonMatrix[rowNum][colNum].config(text=self.__selectedTool)
                     self.__circuitGridClass.updateGrid(rowNum, colNum, self.__selectedTool)  # updates the grid class
             elif (rowNum % 2 == 0 and colNum % 2 == 1) or (rowNum % 2 == 1 and colNum % 2 == 0):
@@ -178,7 +183,7 @@ class FrontEndWindow:
                 # this makes calculations easier because it is obvious what they are connected to
                 self.__buttonMatrix[rowNum][colNum].config(text=self.__selectedTool)
                 self.__circuitGridClass.updateGrid(rowNum, colNum, self.__selectedTool)
-        self.__circuitGridClass.solve()  # this is called at the end of every button click to make it seam like it is
+        self.__circuitGridClass.solve()  # this is called at the end of every button click to make it seem like it is
         # updating continuously
 
     def clearDataPoints(self):
@@ -187,6 +192,7 @@ class FrontEndWindow:
         self.__timeDataPoints = []
 
     def updateDataLists(self):
+        # fetches data from components and appends them to their respective lists to be plotted
         if self.__selectedGraphPlotComponent is not None and self.__selectedGraphPlotComponent.isEdgy():
             self.__currentDataPoints.append(self.__selectedGraphPlotComponent.getCurrent())
             self.__voltageDataPoints.append(self.__selectedGraphPlotComponent.getPotentialDifference())
@@ -195,7 +201,7 @@ class FrontEndWindow:
             self.clearDataPoints()
 
     def plotGraphs(self):
-        fontDict = {'fontsize': 8}
+        fontDict = {'fontsize': 8}  # allows for quick changes to graph text
 
         IVFig = Figure(figsize=(3, 1), dpi=100)
         IVax = IVFig.add_subplot()
@@ -213,6 +219,7 @@ class FrontEndWindow:
         Itax.set_title("Current time", fontdict=fontDict)
         Itax.tick_params(labelsize=6)
         Itax.plot(self.__timeDataPoints, self.__currentDataPoints, linewidth=1, markersize=6)
+        print(self.__timeDataPoints, self.__currentDataPoints)
         Itax.set_xlabel("current[A]")
         Itax.set_ylabel("time[t]")
         ItCanvas = FigureCanvasTkAgg(ItFig, master=self.__graphFrame)
@@ -231,6 +238,7 @@ class FrontEndWindow:
         VtCanvas.get_tk_widget().grid(row=2, sticky="NEWS")
 
     def updateDataSelectedComponentText(self):
+        # updates the text displayed when a component is selected using values fetched from the object
         try:
             if not self.__selectedComponent.isEdgy():
                 potential = self.__selectedComponent.getPotential()
@@ -245,6 +253,7 @@ class FrontEndWindow:
             self.__selectedComponentDataLabel.config(text="no component \n selected")
 
     def updateDataGraphComponentText(self):
+        # updates the text displayed when a component is selected to be plotted on a graph
         try:
             if not self.__selectedGraphPlotComponent.isEdgy():
                 potential = self.__selectedGraphPlotComponent.getPotential()
@@ -260,19 +269,21 @@ class FrontEndWindow:
 
     def updateComponentEditor(self):
         # updates the name of what is being adjusted ( resistance for a resistor etc)
-        # and changes the number in increase/ decrease section
+        # and changes the number in the editor (increase/ decrease) section
         try:
-            if self.__selectedComponent.isEdgy():
+            if self.__selectedComponent.isEdgy():  # if edge type object
                 if self.__selectedComponent.isWire():
                     self.__componentEditLabel.config(text="Resistivity (ohm metres/10^-8)")
-                    self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getResistanceProportion()))
+                    self.__componentEditStatNumLabel.config(
+                        text=str(self.__selectedComponent.getResistanceProportion()))
+                    # the number in the editor is the proportion the original resistance changes by
                 else:
                     self.__componentEditLabel.config(text="Resistance (ohms)")
                     self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getResistance()))
-            elif not self.__selectedComponent.isEdgy():
+            elif not self.__selectedComponent.isEdgy():  # if node type object
                 self.__componentEditLabel.config(text="Potential")
                 self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getPotential()))
-        except:
+        except:  # if nothing is selected
             self.__componentEditLabel.config(text="")
             self.__componentEditStatNumLabel.config(text="-")
 
@@ -314,7 +325,7 @@ class FrontEndWindow:
         self.__selectedTool = chr(174)
         self.__circuitGridClass.solve()
 
-    # editing component stats button commands
+    # editing component data button commands
     def increaseButtonClick(self):
         try:
             if self.__selectedComponent.isEdgy() and not self.__selectedComponent.isWire():
@@ -386,4 +397,4 @@ class FrontEndWindow:
 numberOfGridRows = 15
 numberOfGridCols = 15
 MainWindow = FrontEndWindow(numberOfGridRows, numberOfGridCols)
-MainWindow.run()
+MainWindow.run()  # runs the main window

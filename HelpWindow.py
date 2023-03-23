@@ -1,7 +1,7 @@
 import tkinter as tk
 
 
-class HelpWindow:
+class HelpWindow:  # user instructions
     def __init__(self):
         self.__window = tk.Tk()
         self.__window.columnconfigure(0,minsize=600)

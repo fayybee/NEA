@@ -1,4 +1,4 @@
-from ComponantClasses import *
+from ComponentClasses import *
 from CircuitSolution import *
 
 

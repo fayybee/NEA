@@ -158,13 +158,17 @@ class FrontEndWindow:
         elif self.__selectedTool == "plot":
             self.clearDataPoints()  # clears the data prom previous plots
             self.__selectedGraphPlotComponent = self.__circuitGridClass.getObject(rowNum, colNum)
-            if self.__selectedGraphPlotComponent.isEdgy():  # only edge type components can be plotted because node
-                # types don't have a current
-                self.__buttonMatrix[rowNum][colNum].config(bg="grey")  # shows what has been selected
-                self.__graphSelectedCell = self.__buttonMatrix[rowNum][colNum]
-                self.updateDataGraphComponentText()
-                self.updateDataLists()
-                self.plotGraphs()
+            if self.__selectedGraphPlotComponent is not None:
+                try:
+                    if self.__selectedGraphPlotComponent.isEdgy():  # only edge type components can be plotted because node
+                        # types don't have a current
+                        self.__buttonMatrix[rowNum][colNum].config(bg="grey")  # shows what has been selected
+                        self.__graphSelectedCell = self.__buttonMatrix[rowNum][colNum]
+                        self.updateDataGraphComponentText()
+                        self.updateDataLists()
+                        self.plotGraphs()
+                except:
+                    pass
         else:  # otherwise grid is updated with selected component
             if self.__graphSelectedCell is not None:
                 self.__graphSelectedCell.config(bg="grey")
@@ -219,7 +223,6 @@ class FrontEndWindow:
         Itax.set_title("Current time", fontdict=fontDict)
         Itax.tick_params(labelsize=6)
         Itax.plot(self.__timeDataPoints, self.__currentDataPoints, linewidth=1, markersize=6)
-        print(self.__timeDataPoints, self.__currentDataPoints)
         Itax.set_xlabel("current[A]")
         Itax.set_ylabel("time[t]")
         ItCanvas = FigureCanvasTkAgg(ItFig, master=self.__graphFrame)

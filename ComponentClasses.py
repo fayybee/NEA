@@ -87,8 +87,8 @@ class Conductor(Component):  # edge type component (children are also edge type)
             self.__referenceResistanceProportion = newR
             self.__resistance = self.__referenceResistance * newR
             # this uses proportions to find resistance thus allowing the class to represent changes in both
-            # resistance of a component and resistivity of a wire without creating a new class and overwriting
-            # functions using pL/A = R where p is resistivity of the wire L is length A is area and R is resistance R
+            # resistance of a component and resistivity of a wire (polymorphism)
+            # using pL/A = R where p is resistivity of the wire L is length A is area and R is resistance R
             # is directly proportional to p so increasing p by a factor also increasing R by the same factor (L and A
             # don't change)
 

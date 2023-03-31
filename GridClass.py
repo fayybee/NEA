@@ -21,11 +21,13 @@ class Grid:  # used to connect front end classes to backend classes
         if selectedTool == "-":
             self.__grid[row][col] = Ground()
         if selectedTool == chr(126):
-            self.__grid[row][col] = Conductor()
+            self.__grid[row][col] = Wire()
         if selectedTool == chr(174):
             self.__grid[row][col] = Resistor()
         if selectedTool == chr(176):
             self.__grid[row][col] = Join()
+        if selectedTool == chr(9401):
+            self.__grid[row][col] = Diode()
 
     def getObject(self, row, col):  # returns the component object for a position on the grid
         if self.__grid[row][col] is not None:

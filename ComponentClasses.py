@@ -1,9 +1,12 @@
+import math
+
+
 class Component:  # overarching class, all objects are children of this class
-    def __init__(self, isVariable=True, isEdgy=False, isWire=False):
+    def __init__(self, isVariable=True, isEdgy=False, componentType="node"):
         self._isVariable = isVariable  # determines if the component can be varied or not so non-variable types do
         # not have their values overwritten by accident
         self.__edgy = isEdgy  # determines if the component acts like an edge or not
-        self.__isWire = isWire
+        self.__componentType = componentType
 
     def isVariable(self):
         return self._isVariable
@@ -11,16 +14,16 @@ class Component:  # overarching class, all objects are children of this class
     def isEdgy(self):
         return self.__edgy
 
-    def isWire(self):
-        return self.__isWire
+    def getComponentType(self):
+        return self.__componentType
 
 
 ###
 
 
 class Join(Component):  # node type component (all children are also node types)
-    def __init__(self, voltage=None, isVariable=True, isSource=False):
-        super().__init__(isVariable)
+    def __init__(self, voltage=None, isVariable=True, isSource=False, componentType="join"):
+        super().__init__(isVariable, False, componentType)
         self.__potential = voltage
         self.__node = None  # will hold the node object assigned to it when solving the graph
         self.__isSource = isSource
@@ -29,7 +32,7 @@ class Join(Component):  # node type component (all children are also node types)
         self.__potential = newVoltage
 
     def getPotential(self):
-        return round(self.__potential,5)
+        return round(self.__potential, 5)
 
     def assignNode(self, node):
         self.__node = node
@@ -43,38 +46,48 @@ class Join(Component):  # node type component (all children are also node types)
 
 class Source(Join):
     def __init__(self):
-        super().__init__(5.0, False, True)
+        super().__init__(5.0, False, True, "source")
 
 
 class Ground(Join):
     def __init__(self):
-        super().__init__(0.0, False)
+        super().__init__(0.0, False,False,"ground")
 
 
 ###
 
 
 class Conductor(Component):  # edge type component (children are also edge type)
-    def __init__(self, resistance=0.00014, isVariable=True, isWire=True):
+    def __init__(self, isVariable=True, componentType="wire", isOhmic=True):
         # default resistance is typical of a 10cm 3mm diameter piece of copper wire
-        super().__init__(isVariable, True, isWire)
-        self.__current = 0.0
-        self.__potentialDiff = 0.0
+        super().__init__(isVariable, True, componentType)
+        # protected used rather then private so children can access
+        self._current = 0.0
+        self._potentialDiff = 0.0
+        self.__isOhmic = isOhmic
+
+    def updateCurrent(self, newC):
+        self._current = newC
+
+    def getCurrent(self):
+        return round(self._current, 5)
+
+    def getPotentialDifference(self):
+        return round(self._potentialDiff, 5)
+
+    def updatePotentialDifference(self, newV):
+        self._potentialDiff = newV
+
+    def isOhmic(self):
+        return self.__isOhmic
+
+
+class OhmicConductor(Conductor):
+    def __init__(self, resistance, isVariable, componentType):
+        super().__init__(resistance, isVariable, componentType)
         self.__referenceResistance = resistance  # original resistance of an un adjusted component
         self.__referenceResistanceProportion = 1  # the amount the component has been changed by (proportion)
         self.__resistance = resistance
-
-    def updateCurrent(self, newC):
-        self.__current = newC
-
-    def getCurrent(self):
-        return round(self.__current, 5)
-
-    def getPotentialDifference(self):
-        return round(self.__potentialDiff, 5)
-
-    def updatePotentialDifference(self, newV):
-        self.__potentialDiff = newV
 
     def getResistanceProportion(self):
         return round(self.__referenceResistanceProportion, 1)  # needed to deal with rounding errors
@@ -93,6 +106,31 @@ class Conductor(Component):  # edge type component (children are also edge type)
             # don't change)
 
 
-class Resistor(Conductor):
+class Resistor(OhmicConductor):
     def __init__(self):
-        super().__init__(1, True, False)
+        super().__init__(1, True, "resistor")
+
+
+class Wire(OhmicConductor):
+    def __init__(self):
+        super().__init__(0.00014, True, "wire")
+
+
+class Diode(Conductor):
+    def __init__(self):
+        super().__init__(True, "diode", False)
+        self.__factor = 1
+        self.__resistance = 1000000
+
+    def setFactor(self, newF):
+        self.__factor = newF
+
+    def getFactor(self):
+        return round(self.__factor,1)
+
+    def setResistance(self, newR):
+        print("setting R", newR)
+        self.__resistance = newR
+
+    def getResistance(self):
+        return round(self.__resistance,5)

@@ -12,8 +12,8 @@ class FrontEndWindow:
         # window constants
         self.__gridNumberOfRows = rows
         self.__gridNumberOfColumns = cols
-        self.__gridWidth = 500
-        self.__gridHeight = 500
+        self.__gridWidth = 550
+        self.__gridHeight = 550
         self.__toolBarWidth = 170
         self.__graphFrameWidth = 250  # window constants are which to change here
 
@@ -124,6 +124,8 @@ class FrontEndWindow:
         self.__buttonWire.grid(row=7, sticky="NEWS")
         self.__buttonResistor = tk.Button(self.__toolBarFrame, text=chr(174), command=self.resistorButtonClick)
         self.__buttonResistor.grid(row=8, sticky="NEWS")
+        self.__buttonDiode = tk.Button(self.__toolBarFrame, text=chr(9401), command=self.diodeButtonClick)
+        self.__buttonDiode.grid(row=9, sticky="NEWS")
 
         # creating stats button
         self.__componentUpButton = tk.Button(self.__dataFrame, text="+", command=self.increaseButtonClick)
@@ -138,7 +140,7 @@ class FrontEndWindow:
         # show graphs
         self.plotGraphs()
 
-    def openHelpWindow(self):  # when Help buttion is clicked a new window will open containing instructions on use
+    def openHelpWindow(self):  # when Help button is clicked a new window will open containing instructions on use
         helpWindow = HelpWindow()
         helpWindow.run()
 
@@ -212,8 +214,8 @@ class FrontEndWindow:
         IVax.set_title("Current Voltage", fontdict=fontDict)
         IVax.tick_params(labelsize=6)
         IVax.plot(self.__voltageDataPoints, self.__currentDataPoints, linewidth=1, markersize=6)
-        IVax.set_xlabel("current[A]")
-        IVax.set_ylabel("voltage[V]")
+        IVax.set_ylabel("current[A]")
+        IVax.set_xlabel("voltage[V]")
         IVCanvas = FigureCanvasTkAgg(IVFig, master=self.__graphFrame)
         IVCanvas.draw()
         IVCanvas.get_tk_widget().grid(row=0, sticky="NEWS")
@@ -275,14 +277,17 @@ class FrontEndWindow:
         # and changes the number in the editor (increase/ decrease) section
         try:
             if self.__selectedComponent.isEdgy():  # if edge type object
-                if self.__selectedComponent.isWire():
+                if self.__selectedComponent.getComponentType() == "wire":
                     self.__componentEditLabel.config(text="Resistivity (ohm metres/10^-8)")
                     self.__componentEditStatNumLabel.config(
                         text=str(self.__selectedComponent.getResistanceProportion()))
                     # the number in the editor is the proportion the original resistance changes by
-                else:
+                elif self.__selectedComponent.getComponentType() == "resistor":
                     self.__componentEditLabel.config(text="Resistance (ohms)")
                     self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getResistance()))
+                elif self.__selectedComponent.getComponentType() == "diode":
+                    self.__componentEditLabel.config(text="Work Function Factor")
+                    self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getFactor()))
             elif not self.__selectedComponent.isEdgy():  # if node type object
                 self.__componentEditLabel.config(text="Potential")
                 self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getPotential()))
@@ -328,15 +333,22 @@ class FrontEndWindow:
         self.__selectedTool = chr(174)
         self.__circuitGridClass.solve()
 
+    def diodeButtonClick(self):
+        self.__selectedTool = chr(9401)
+        self.__circuitGridClass.solve()
+
     # editing component data button commands
     def increaseButtonClick(self):
         try:
-            if self.__selectedComponent.isEdgy() and not self.__selectedComponent.isWire():
+            if self.__selectedComponent.getComponentType() == "resistor":
                 self.increaseResistance()
                 self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getResistance()))
-            elif self.__selectedComponent.isWire():
+            elif self.__selectedComponent.getComponentType() == "wire":
                 self.increaseResistivity()
                 self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getResistanceProportion()))
+            elif self.__selectedComponent.getComponentType() == "diode":
+                self.increaseDiodeFactor()
+                self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getFactor()))
             elif self.__selectedComponent.isSource():
                 self.increasePotential()
                 self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getPotential()))
@@ -350,12 +362,15 @@ class FrontEndWindow:
 
     def decreaseButtonClick(self):
         try:
-            if self.__selectedComponent.isEdgy() and not self.__selectedComponent.isWire():
+            if self.__selectedComponent.getComponentType() == "resistor":
                 self.decreaseResistance()
                 self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getResistance()))
-            elif self.__selectedComponent.isWire():
+            elif self.__selectedComponent.getComponentType() == "wire":
                 self.decreaseResistivity()
                 self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getResistanceProportion()))
+            elif self.__selectedComponent.getComponentType() == "diode":
+                self.decreaseDiodeFactor()
+                self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getFactor()))
             elif self.__selectedComponent.isSource():
                 self.decreasePotential()
                 self.__componentEditStatNumLabel.config(text=str(self.__selectedComponent.getPotential()))
@@ -387,6 +402,13 @@ class FrontEndWindow:
     def decreasePotential(self):
         if self.__selectedComponent.getPotential() > 0:
             self.__selectedComponent.updatePotential(self.__selectedComponent.getPotential() - 1)
+
+    def increaseDiodeFactor(self):
+        self.__selectedComponent.setFactor(self.__selectedComponent.getFactor() + 0.1)
+
+    def decreaseDiodeFactor(self):
+        if self.__selectedComponent.getFactor() > 0.1:
+            self.__selectedComponent.setFactor(self.__selectedComponent.getFactor() - 0.1)
 
     # solve
     def solveCircuit(self):

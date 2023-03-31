@@ -1,4 +1,8 @@
-minimumVoltageChange = 0.00001 # this is used for determining if the circuit has reached an equilibrium point (rounding
+import math
+
+minimumVoltageChange = 0.00001  # this is used for determining if the circuit has reached an equilibrium point (rounding
+
+
 # errors and other factors can cause the solution to never reach a natural equilibrium point and instead oscillate
 # between values)
 
@@ -52,7 +56,10 @@ class CircuitGraph:
                             # checks for nodes above and bellow
                         else:
                             continue  # not a valid position for an edge type component so not considered
-                        self.__listEdges[row, col] = Edge(inputNode, outputNode, component)
+                        if component.isOhmic():
+                            self.__listEdges[row, col] = BasicEdge(inputNode, outputNode, component)
+                        if not component.isOhmic():
+                            self.__listEdges[row, col] = DiodeEdge(inputNode, outputNode, component)
                         # instantiates an edge object containing the input node, output node, and the corresponding
                         # component. Instantiating with the component makes updating components to the values
                         # calculated easier
@@ -92,16 +99,21 @@ class CircuitGraph:
                             # other connected node (v), divided by the resistance in the edge (R). With each iteration
                             # through the circuit this rough estimate for the current in the edge and therefore
                             # potential in the node becomes more accurate
+                            node.setVoltageEstimate(numerator / denominator)
+                            # resistance cancels to give V (potential of the node)
                         except:
                             pass  # errors if circuit is not complete but no action needed as this is dealt with when
                             # finding the edges
-                        node.setVoltageEstimate(numerator / denominator)
-                        # resistance cancels to give V (potential of the node)
+
             for node in self.__listNodes.values():
                 node.updateVoltage()
                 # once one complete iteration through all the nodes is complete we can update the voltage of the
                 # nodes so that the next iteration can use more accurate voltages in the calculation, bringing it
                 # closer to the real values
+            for edge in self.__listEdges.values():
+                if edge.isDiode():
+                    edge.setResistance()
+
         self.updateComponentObjects()
         # when the circuit is stable the component objects be updated with values for potential, potential difference
         # and current, calculated using the potential in the nodes
@@ -117,6 +129,8 @@ class CircuitGraph:
             component = self.__circuitGrid[row][col]
             component.updatePotentialDifference(abs(edge.getPD()))
             component.updateCurrent(abs(edge.getPD() / float(edge.getResistance())))
+            if not component.isOhmic():
+                component.setResistance(edge.getResistance())
 
 
 ###
@@ -170,22 +184,67 @@ class Node:
 
 
 class Edge:
-    def __init__(self, inputNode, outputNode, circuitGridContents):
-        self.__resistance = circuitGridContents.getResistance()
-        self.__inputNode = inputNode
-        self.__outputNode = outputNode
+    def __init__(self, inputNode, outputNode, isDiode):
+        self._inputNode = inputNode
+        self._outputNode = outputNode
         inputNode.addEdge(self)
         outputNode.addEdge(self)
         # when the edge object is instantiated with an input and an output node it will add itself to that node
         # object so that it can be easily accessed from that node object
+        self.__isDiode = isDiode
+
+    def isDiode(self):
+        return self.__isDiode
 
     def getOtherNode(self, askingNode):
-        if askingNode == self.__outputNode:
-            return self.__inputNode
-        return self.__outputNode
+        if askingNode == self._outputNode:
+            return self._inputNode
+        return self._outputNode
+
+    def getPD(self):
+        return self._inputNode.getVoltage() - self._outputNode.getVoltage()
+
+
+
+class BasicEdge(Edge):
+    def __init__(self, inputNode, outputNode, circuitGridContents):
+        super().__init__(inputNode, outputNode,False)
+        self._resistance = circuitGridContents.getResistance()
+
+    def getResistance(self):
+        return self._resistance
+
+
+class DiodeEdge(Edge):
+    def __init__(self, inputNode, outputNode, circuitGridContents):
+        super().__init__(inputNode, outputNode, True)
+        self.__resistanceFactor = circuitGridContents.getFactor()
+        self.__previousResistance = 1
+        self.__resistance = 0.1
+        self.setResistance()
+
 
     def getResistance(self):
         return self.__resistance
 
-    def getPD(self):
-        return self.__inputNode.getVoltage() - self.__outputNode.getVoltage()
+    def setDampResistance(self, newR):
+        previousR = self.__previousResistance
+        alpha = 0.5
+        self.__resistance = (newR*alpha)+(self.__resistance*(1-alpha))
+        self.__previousResistance = previousR
+
+
+
+    def setResistance(self):
+        voltage = self._inputNode.getVoltage() - self._outputNode.getVoltage()
+        current = (math.e ** voltage) - 0.999999
+        factoredCurrent = self.__resistanceFactor*current
+        self.setDampResistance(abs(voltage/factoredCurrent))
+        print("current=", self.__resistanceFactor * (
+                (math.e ** (self._inputNode.getVoltage() - self._outputNode.getVoltage())) - 0.999999))
+        print("voltage=", self._inputNode.getVoltage() - self._outputNode.getVoltage())
+        print(self.__resistance)
+        # diode IV graph is exponential following y=e**x-1 which can be compared to I=e**v-1 to find resistance of a
+        # diode at a point we need to use V/I=R so we first calculate I using the above graph function and then
+        # dividing V by I
+

@@ -49,7 +49,8 @@ class HelpWindow:  # user instructions
         f"(-) = negative terminal (node), this is always 0 (ground)\n"
         f"({chr(176)}) = join point (node), this can be used to connect two or more edges (no resistance)\n"
         f"({chr(126)}) = wire component (edge), this has very low resistance (x10^-6)\n"
-        f"({chr(174)}) = resistor component (edge), this can be varied\n")
+        f"({chr(174)}) = resistor component (edge), this can be varied\n"
+        f"({chr(9401)}) = diode component (edge), work function can be changed")
         self.__componentKeyFrameText.grid(column=0)
 
     def run(self):

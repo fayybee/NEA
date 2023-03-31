@@ -205,10 +205,9 @@ class Edge:
         return self._inputNode.getVoltage() - self._outputNode.getVoltage()
 
 
-
 class BasicEdge(Edge):
     def __init__(self, inputNode, outputNode, circuitGridContents):
-        super().__init__(inputNode, outputNode,False)
+        super().__init__(inputNode, outputNode, False)
         self._resistance = circuitGridContents.getResistance()
 
     def getResistance(self):
@@ -223,28 +222,21 @@ class DiodeEdge(Edge):
         self.__resistance = 0.1
         self.setResistance()
 
-
     def getResistance(self):
         return self.__resistance
 
     def setDampResistance(self, newR):
         previousR = self.__previousResistance
         alpha = 0.5
-        self.__resistance = (newR*alpha)+(self.__resistance*(1-alpha))
+        self.__resistance = (newR * alpha) + (self.__resistance * (1 - alpha))
         self.__previousResistance = previousR
-
-
+        # this is to prevent the resistance from oscillating between two values
 
     def setResistance(self):
         voltage = self._inputNode.getVoltage() - self._outputNode.getVoltage()
         current = (math.e ** voltage) - 0.999999
-        factoredCurrent = self.__resistanceFactor*current
-        self.setDampResistance(abs(voltage/factoredCurrent))
-        print("current=", self.__resistanceFactor * (
-                (math.e ** (self._inputNode.getVoltage() - self._outputNode.getVoltage())) - 0.999999))
-        print("voltage=", self._inputNode.getVoltage() - self._outputNode.getVoltage())
-        print(self.__resistance)
+        factoredCurrent = self.__resistanceFactor * current
+        self.setDampResistance(abs(voltage / factoredCurrent))
         # diode IV graph is exponential following y=e**x-1 which can be compared to I=e**v-1 to find resistance of a
         # diode at a point we need to use V/I=R so we first calculate I using the above graph function and then
         # dividing V by I
-

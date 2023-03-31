@@ -51,7 +51,7 @@ class Source(Join):
 
 class Ground(Join):
     def __init__(self):
-        super().__init__(0.0, False,False,"ground")
+        super().__init__(0.0, False, False, "ground")
 
 
 ###
@@ -126,11 +126,10 @@ class Diode(Conductor):
         self.__factor = newF
 
     def getFactor(self):
-        return round(self.__factor,1)
+        return round(self.__factor, 1)
 
     def setResistance(self, newR):
-        print("setting R", newR)
         self.__resistance = newR
 
     def getResistance(self):
-        return round(self.__resistance,5)
+        return round(self.__resistance, 5)
